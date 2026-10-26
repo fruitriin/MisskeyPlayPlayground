@@ -164,7 +164,7 @@ const handlers: Record<string, (params: Record<string, unknown>) => unknown> = {
 		name: 'Mock Misskey',
 		shortName: null,
 		uri: MOCK_SERVER_URL,
-		description: 'AiScript Playground に同梱しているモックの Misskey サーバーです。ブラウザの中だけで動いています。',
+		description: 'Misskey Play Playground に同梱しているモックの Misskey サーバーです。ブラウザの中だけで動いています。',
 		langs: ['ja'],
 		disableRegistration: true,
 		emailRequiredForSignup: false,
@@ -179,7 +179,7 @@ const handlers: Record<string, (params: Record<string, unknown>) => unknown> = {
 		if (!e) throw new MockApiError({ message: 'No such emoji.', code: 'NO_SUCH_EMOJI', id: '6a5e3be7-5ac3-44a6-a425-9937cd66f8e3', kind: 'client' });
 		return e;
 	},
-	i: () => ({ ...me(), followersCount: 3, followingCount: 3, notesCount: notes.filter(n => n.userId === me().id).length, description: 'AiScript Playground のダミーユーザーです。' }),
+	i: () => ({ ...me(), followersCount: 3, followingCount: 3, notesCount: notes.filter(n => n.userId === me().id).length, description: 'Misskey Play Playground のダミーユーザーです。' }),
 	'users/show': (params) => {
 		const user = findUser(params);
 		return { ...user, followersCount: 10, followingCount: 5, notesCount: notes.filter(n => n.userId === user.id).length, description: null };

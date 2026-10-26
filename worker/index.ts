@@ -1,5 +1,6 @@
 // ライブ共有の API。合言葉ごとに Room（Durable Object）を 1 つ持ち、
 // ブラウザとは WebSocket で、AI などの外部とは HTTP でやり取りする。
+// WebSocket は 2 種類ある。viewer（playground の画面）と、observer（見るだけ。画面として数えず、act も届かない）
 // /api/* 以外のリクエストは静的ファイル（dist/）がそのまま返す（wrangler.jsonc の run_worker_first）
 import { DurableObject } from 'cloudflare:workers';
 
@@ -52,6 +53,10 @@ type ClientMessage =
 
 type Pending = { resolve: (value: unknown) => void; timer: ReturnType<typeof setTimeout> };
 
+// WebSocket に付ける目印
+const VIEWER = 'viewer';
+const OBSERVER = 'observer';
+
 export class Room extends DurableObject<Env> {
 	// HTTP のリクエストが、ブラウザからの結果を待っているもの。DO が動いているあいだだけメモリに持つ
 	private waitingState = new Map<number, Pending[]>();
@@ -83,9 +88,9 @@ export class Room extends DurableObject<Env> {
 		return rev;
 	}
 
-	private broadcast(message: unknown, except?: WebSocket) {
+	private broadcast(message: unknown, except?: WebSocket, tag?: string) {
 		const text = JSON.stringify(message);
-		for (const ws of this.ctx.getWebSockets()) {
+		for (const ws of this.ctx.getWebSockets(tag)) {
 			if (ws !== except) ws.send(text);
 		}
 	}
@@ -115,16 +120,23 @@ export class Room extends DurableObject<Env> {
 	async fetch(request: Request): Promise<Response> {
 		const url = new URL(request.url);
 		const action = url.pathname.match(/\/(ws|state|act)\/?$/)?.[1] ?? null;
-		const viewers = this.ctx.getWebSockets().length;
+		const viewers = this.ctx.getWebSockets(VIEWER).length;
 
 		if (action === 'ws') {
+			const role = url.searchParams.get('role') === OBSERVER ? OBSERVER : VIEWER;
 			const pair = new WebSocketPair();
 			const [client, server] = Object.values(pair);
-			this.ctx.acceptWebSocket(server);
+			this.ctx.acceptWebSocket(server, [role]);
 			await this.touch();
 			const room = await this.room();
-			server.send(JSON.stringify({ type: 'snapshot', ...room, viewers: viewers + 1 }));
-			this.broadcast({ type: 'viewers', viewers: viewers + 1 }, server);
+			const nowViewers = viewers + (role === VIEWER ? 1 : 0);
+			server.send(JSON.stringify({ type: 'snapshot', role, ...room, viewers: nowViewers }));
+			if (role === OBSERVER) {
+				const state = await this.ctx.storage.get('state');
+				if (state != null) server.send(JSON.stringify({ type: 'state', rev: (await this.ctx.storage.get<number>('stateRev')) ?? 0, state }));
+			} else {
+				this.broadcast({ type: 'viewers', viewers: nowViewers }, server);
+			}
 			return new Response(null, { status: 101, webSocket: client });
 		}
 
@@ -165,8 +177,8 @@ export class Room extends DurableObject<Env> {
 		if (action === 'act' && request.method === 'POST') {
 			const body = await request.json<{ actions?: unknown; timeout?: unknown }>().catch(() => null);
 			if (!body || body.actions == null) return error(400, 'INVALID_BODY', '{ "actions": [...] } の形で送ってください');
-			// 操作は 1 つのブラウザにだけ頼む（複数で同時に押すと結果がずれるため）
-			const target = this.ctx.getWebSockets()[0];
+			// 操作は 1 つの画面にだけ頼む（複数で同時に押すと結果がずれるため）。observer には頼まない
+			const target = this.ctx.getWebSockets(VIEWER)[0];
 			if (!target) return error(409, 'NO_VIEWER', 'この合言葉の画面を開いているブラウザがありません');
 			const id = crypto.randomUUID();
 			const timeoutMs = Math.min(typeof body.timeout === 'number' ? body.timeout : 5000, MAX_WAIT_MS - 1000);
@@ -188,6 +200,8 @@ export class Room extends DurableObject<Env> {
 
 	async webSocketMessage(ws: WebSocket, raw: ArrayBuffer | string) {
 		if (typeof raw !== 'string') return;
+		// observer は見るだけ。書き込みは HTTP の PUT を使う
+		if (!this.ctx.getTags(ws).includes(VIEWER)) return;
 		let msg: ClientMessage;
 		try {
 			msg = JSON.parse(raw);
@@ -202,6 +216,7 @@ export class Room extends DurableObject<Env> {
 		} else if (msg.type === 'state') {
 			if (raw.length > MAX_STATE_BYTES) return;
 			await this.ctx.storage.put({ state: msg.state, stateRev: msg.rev, stateAt: new Date().toISOString() });
+			this.broadcast({ type: 'state', rev: msg.rev, state: msg.state }, undefined, OBSERVER);
 			for (const [rev, list] of this.waitingState) {
 				if (rev <= msg.rev) {
 					for (const p of list) {
@@ -222,6 +237,7 @@ export class Room extends DurableObject<Env> {
 	}
 
 	async webSocketClose(ws: WebSocket) {
-		this.broadcast({ type: 'viewers', viewers: this.ctx.getWebSockets().filter(w => w !== ws).length }, ws);
+		if (!this.ctx.getTags(ws).includes(VIEWER)) return;
+		this.broadcast({ type: 'viewers', viewers: this.ctx.getWebSockets(VIEWER).filter(w => w !== ws).length }, ws);
 	}
 }

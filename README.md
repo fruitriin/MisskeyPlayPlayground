@@ -1,6 +1,7 @@
-# AiScript Playground
+# Misskey Play Playground
 
-AiScript と Misskey Play の UI 関数（`Ui:` / `Mk:`）をブラウザで試せる playground です。
+Misskey Play のコード（AiScript）をブラウザで書いて試せる playground です。
+AiScript の標準関数に加えて、Misskey Play 固有の API（`Ui:` の UI 部品、`Mk:` の関数、`USER_ID` や `THIS_URL` などの定数）がそのまま使えます。人だけでなく AI からも使えるように、AI 向けの資料（`/llms.txt`）とライブ共有の API を用意しています。
 
 公開版: https://misskey-play-playground.riinsworkspace.workers.dev/ （AI 向けの入口は https://misskey-play-playground.riinsworkspace.workers.dev/llms.txt ）
 

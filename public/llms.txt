@@ -1,6 +1,6 @@
-# AiScript Playground
+# Misskey Play Playground
 
-> AiScript と Misskey Play の UI 関数（Ui: / Mk:）をブラウザで試せる playground。AI がコードを書くための資料を ./ai/ に置いている。
+> Misskey Play のコード（AiScript）をブラウザで書いて試せる playground。AiScript の標準関数に加えて、Misskey Play 固有の API（Ui: の UI 部品、Mk: の関数、USER_ID・THIS_URL などの定数）がそのまま使える。AI がコードを書くための資料を ./ai/ に置いている。
 
 ## 資料
 
@@ -8,7 +8,7 @@
 - [Tips](./ai/tips.md): AiScript 1.2.1 と Play で間違えやすい点
 - [Play API リファレンス](./ai/play-api.md): Ui:C:* 部品のプロパティ、Mk:* 関数、定数
 - [ミニゲームの作り方](./ai/minigame.md): Play でゲームを作るときの構成と検証のしかた
-- [ライブ共有 API](./ai/live-api.md): ユーザーが画面で決めた合言葉を使い、HTTP（curl）でコードを送って実行し、結果を読み、UI を操作する。ブラウザを操作する仕組みがなくても使える
+- [ライブ共有 API](./ai/live-api.md): ユーザーが画面で決めた合言葉を使い、HTTP（curl）でコードを送って実行し、結果を読み、UI を操作する。ブラウザを操作する仕組みがなくても使える。WebSocket（?role=observer）で、ユーザーの編集や実行結果をすぐ受け取ることもできる
 - [ブラウザ操作 API](./ai/browser-api.md): window.__playground でコードを実行し、UI を JSON で操作する
 - [AiScript 文法](./ai/aiscript/syntax.md)
 - [標準関数](./ai/aiscript/std.md)

@@ -40,6 +40,38 @@ curl $ROOM/state
 - 画面を開いている人がいないと（`viewers` が 0）、`PUT` はコードを保存するだけで、実行結果は返りません。`act` は `409 NO_VIEWER` になります
 - エラーは `{ "error": { "code", "message" } }` の形で返ります。`act` で部品が見つからないときなどは `422 ACT_FAILED` です
 
+## WebSocket で変化を受け取る（見るだけ）
+
+ユーザーが画面でコードを書き換えたり、遊んだりしたことを、`GET` を繰り返さずにすぐ知りたいときは、WebSocket で「見るだけ」の接続をします。
+
+```
+wss://<サイトのホスト>/api/rooms/<合言葉>/ws?role=observer
+```
+
+- `?role=observer` を必ず付けてください。付けないと画面（viewer）として扱われ、`act` の操作があなたに届いてしまいます
+- 見るだけの接続は `viewers` に数えられず、`act` も届きません。送ったメッセージは無視されます。書き込みは HTTP の `PUT` を使ってください
+- 届くメッセージはどれも JSON です
+
+| `type` | 届くとき | 中身 |
+| --- | --- | --- |
+| `snapshot` | つないだ直後 | `{ role: "observer", code, rev, updatedAt, updatedBy, viewers }`。部屋に実行結果があれば、続けて `state` も届く |
+| `code` | コードが書き換わったとき | `{ code, rev, by, run }`。`by` は `"api"`（HTTP の PUT）か `"browser"`（ユーザーが画面で編集） |
+| `state` | 画面が実行結果を報告したとき | `{ rev, state }`。`state` は `GET .../state` の `state` と同じ形。実行のたび、ユーザーが操作するたびに届く |
+| `viewers` | 画面の数が変わったとき | `{ viewers }` |
+
+Node.js（22 以降は `WebSocket` が組み込み）の例です。
+
+```js
+const ws = new WebSocket('wss://<サイトのホスト>/api/rooms/<合言葉>/ws?role=observer');
+ws.onmessage = ev => {
+  const msg = JSON.parse(ev.data);
+  if (msg.type === 'code' && msg.by === 'browser') console.log('ユーザーが編集した', msg.rev);
+  if (msg.type === 'state') console.log('実行結果', msg.state.logs);
+};
+```
+
+サイトをデプロイし直すと、WebSocket は切れます。切れたら、数秒おいてつなぎ直してください。
+
 ## 決まりごと
 
 - 合言葉は英数字と `-` `_` の 8〜64 文字です。合言葉を知っている人は誰でも読み書きできます

@@ -1,6 +1,6 @@
-# AiScript Playground
+# Misskey Play Playground
 
-AiScript と Misskey Play の UI 関数をブラウザで試せる playground（Vite + Vue 3 + TypeScript）。
+Misskey Play のコード（AiScript と、Play 固有の `Ui:` / `Mk:` / 定数）をブラウザで試せる playground（Vite + Vue 3 + TypeScript）。
 
 ## git の運用
 

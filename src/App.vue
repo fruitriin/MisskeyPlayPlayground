@@ -3,7 +3,7 @@
 	<header :class="$style.header">
 		<div :class="$style.logo">
 			<span :class="$style.logoMark">▶</span>
-			<span :class="$style.logoText">AiScript Playground</span>
+			<span :class="$style.logoText">Misskey Play Playground</span>
 		</div>
 		<select :class="$style.sampleSelect" :value="''" aria-label="サンプルを開く" @change="loadSample(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''">
 			<option value="" disabled>サンプルを開く…</option>
@@ -12,10 +12,11 @@
 			</optgroup>
 		</select>
 		<div :class="$style.spacer"/>
-		<XButton small inline :class="[$style.headerButton, { [$style.liveOn]: live.status !== 'idle' }]" title="合言葉で、外からコードを読み書きできるようにする" @click="showLive = true">{{ live.status === 'idle' ? '🔗 ライブ共有' : '● ライブ共有中' }}</XButton>
-		<XButton small inline :class="$style.headerButton" title="ミニゲームの作り方" @click="showGuide = true">📖 ガイド</XButton>
-		<XButton small inline :class="$style.headerButton" title="共有用のリンクをコピー" @click="share">共有</XButton>
-		<XButton small inline :class="$style.headerButton" title="実行環境の設定" @click="showSettings = true">⚙ 設定</XButton>
+		<XButton small inline :class="$style.headerButton" title="AI に作ってもらう方法と、AI 向けの資料" @click="showAi = true">🤖<span :class="$style.btnLabel"> AI と作る</span></XButton>
+		<XButton small inline :class="[$style.headerButton, { [$style.liveOn]: live.status !== 'idle' }]" title="合言葉で、外からコードを読み書きできるようにする" @click="showLive = true">{{ live.status === 'idle' ? '🔗' : '●' }}<span :class="$style.btnLabel">{{ live.status === 'idle' ? ' ライブ共有' : ' ライブ共有中' }}</span></XButton>
+		<XButton small inline :class="$style.headerButton" title="ミニゲームの作り方" @click="showGuide = true">📖<span :class="$style.btnLabel"> ガイド</span></XButton>
+		<XButton small inline :class="$style.headerButton" title="共有用のリンクをコピー" @click="share">📤<span :class="$style.btnLabel"> 共有</span></XButton>
+		<XButton small inline :class="$style.headerButton" title="実行環境の設定" @click="showSettings = true">⚙<span :class="$style.btnLabel"> 設定</span></XButton>
 		<XButton v-if="running" small inline :class="$style.headerButton" @click="stop">■ 停止</XButton>
 		<XButton primary small inline :class="$style.headerButton" title="実行 (Cmd/Ctrl + Enter)" @click="execute">▶ 実行</XButton>
 	</header>
@@ -38,7 +39,9 @@
 				<div :class="$style.previewBody" data-testid="preview">
 					<AsUi v-if="root && root.children?.length" :key="runKey" :component="root" :components="components" size="medium"/>
 					<div v-else :class="$style.empty">
-						<p>コードを書いて <b>▶ 実行</b>（Cmd/Ctrl + Enter）すると、Ui:render の結果がここに出ます。</p>
+						<p>Misskey Play のコードを書いて <b>▶ 実行</b>（Cmd/Ctrl + Enter）すると、Ui:render の結果がここに出ます。</p>
+						<p>AiScript の標準関数に加えて、Play 固有の <code>Ui:</code>（UI 部品）・<code>Mk:</code>（ダイアログ、API、保存など）・定数（<code>USER_ID</code>、<code>THIS_URL</code> など）がそのまま使えます。</p>
+						<p>AI にコードを書いてもらうこともできます。右上の <b>🤖 AI と作る</b> を見てください。</p>
 					</div>
 				</div>
 			</div>
@@ -69,6 +72,7 @@
 
 	<SettingsPanel v-if="showSettings" @close="showSettings = false"/>
 	<LivePanel v-if="showLive" @close="showLive = false"/>
+	<AiPanel v-if="showAi" @close="showAi = false" @openLive="showAi = false; showLive = true"/>
 	<GuidePanel v-if="showGuide" @close="closeGuide" @run="openFromGuide" @sample="id => { closeGuide(); loadSample(id); }"/>
 	<Dialogs/>
 </div>
@@ -83,6 +87,7 @@ import Dialogs from './components/Dialogs.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
 import GuidePanel from './components/GuidePanel.vue';
 import LivePanel from './components/LivePanel.vue';
+import AiPanel from './components/AiPanel.vue';
 import { live, joinFromHash } from './live.js';
 import XButton from './components/ui/XButton.vue';
 import { allSamples, sampleGroups } from './allSamples.js';
@@ -95,6 +100,7 @@ import { code, mobileTab, screenshotMode } from './store.js';
 const showSettings = ref(false);
 const showGuide = ref(window.location.hash === '#guide');
 const showLive = ref(false);
+const showAi = ref(window.location.hash === '#ai');
 const bottomTab = ref<'console' | 'tree'>('console');
 const mobileTabs = [
 	{ id: 'editor', label: 'コード' },
@@ -231,6 +237,7 @@ onMounted(async () => {
 .badge { padding: 2px 8px; font-weight: normal; border-radius: 999px; background: var(--buttonBg); }
 .previewBody { flex: 1; overflow: auto; padding: 16px; background: var(--bg); }
 .empty { color: var(--fgTransparentWeak); font-size: 0.9em; padding: 8px; }
+.empty code { padding: 0.1em 0.3em; font-family: Fira Code, Menlo, monospace; background: var(--buttonBg); border-radius: 4px; }
 .tab { padding: 6px 8px; font: inherit; color: var(--fgTransparentWeak); background: none; border: none; border-bottom: solid 2px transparent; cursor: pointer; }
 .tabActive { color: var(--accent); border-bottom-color: var(--accent); }
 .errorCount { margin-left: 6px; padding: 0 6px; font-size: 0.85em; color: #fff; background: #ec4137; border-radius: 999px; }
@@ -253,6 +260,7 @@ onMounted(async () => {
 @media (max-width: 760px) {
 	.header { padding: 8px 16px; }
 	.logoText { display: none; }
+	.btnLabel { display: none; }
 	.sampleSelect { flex: 1; max-width: none; order: 10; flex-basis: 100%; }
 	.mobileTabs {
 		display: flex;

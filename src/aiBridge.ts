@@ -47,7 +47,7 @@ export type Action =
 
 type Options = { timeout?: number; includeCode?: boolean };
 
-const HELP = `window.__playground: AiScript Playground を JSON で操作する API
+const HELP = `window.__playground: Misskey Play Playground を JSON で操作する API
 
 getState({ includeCode? })   いまの状態（ログ・UI ツリー・ダイアログ・トースト）を返す
 getCode() / setCode(code)    エディタのコードを読む・書く（setCode は実行しない）
@@ -310,5 +310,5 @@ declare global {
 
 export function installAiBridge() {
 	window.__playground = playgroundApi;
-	console.info('[AiScript Playground] AI 向けの操作 API: window.__playground.help()');
+	console.info('[Misskey Play Playground] AI 向けの操作 API: window.__playground.help()');
 }

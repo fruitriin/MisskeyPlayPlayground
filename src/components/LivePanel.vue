@@ -66,7 +66,7 @@ const origin = window.location.origin;
 const roomUrl = computed(() => `${origin}/api/rooms/${live.key}`);
 const shareUrl = computed(() => `${origin}${window.location.pathname}#live=${live.key}`);
 
-const prompt = computed(() => `AiScript Playground で Misskey Play 向けのコードを書いてください。
+const prompt = computed(() => `Misskey Play Playground で Misskey Play 向けのコードを書いてください。
 まず ${origin}/llms.txt を読み、資料（特に /ai/tips.md と /ai/live-api.md）を確認してください。
 コードは次の API で私の画面に送り、実行結果を確かめながら進めてください。
 - コードを送って実行: PUT ${roomUrl.value}

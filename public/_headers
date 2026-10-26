@@ -1,0 +1,7 @@
+# AI やブラウザが日本語を文字化けさせずに読めるよう、文字コードを明示する（Cloudflare Workers の Static Assets が読む）
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+/*.txt
+  Content-Type: text/plain; charset=utf-8
+/*.ais
+  Content-Type: text/plain; charset=utf-8

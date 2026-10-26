@@ -11,7 +11,8 @@ import type { AsUiComponent } from './aiscript/ui.js';
 export type UiNode = {
 	id: string;
 	type: string;
-	hidden?: boolean;
+	// container の hidden。ほかの部品は常に false
+	hidden: boolean;
 	props: Record<string, unknown>;
 	// 設定されているコールバックの名前（onClick など）
 	handlers: string[];
@@ -53,6 +54,7 @@ const STORAGE_PREFIX = 'aiscript:playground:';
 const HELP = `window.__playground: Misskey Play Playground を JSON で操作する API
 
 getState({ includeCode? })   いまの状態（ログ・UI ツリー・ダイアログ・トースト）を返す
+summary()                    状態を短い文章で返す（出力の長さに制限がある道具向け）
 getCode() / setCode(code)    エディタのコードを読む・書く（setCode は実行しない）
 run(code?, { timeout? })     コードを実行し、落ち着いたら状態を返す（code を省くとエディタのコード）
 stop()                       実行を止める
@@ -124,8 +126,7 @@ function findComponent(id: string): AsUiComponent | null {
 
 function toNode(c: AsUiComponent): UiNode {
 	const { props, handlers } = serializeProps(c);
-	const node: UiNode = { id: c.id, type: c.type, props, handlers };
-	if (c.hidden) node.hidden = true;
+	const node: UiNode = { id: c.id, type: c.type, hidden: c.hidden === true, props, handlers };
 	const value = domValue(c);
 	if (value !== undefined) node.value = value;
 	if (c.children) {
@@ -251,7 +252,38 @@ function perform(action: Action): void {
 	}
 }
 
+// 出力の長さに制限のある道具向けに、状態を短い文章にまとめる
+function summarize(): string {
+	const state = getState({ includeCode: false });
+	const lines = [
+		`AiScript ${state.aiscriptVersion} / running=${state.running} / pendingCallbacks=${state.pendingCallbacks}`,
+	];
+	const errors = state.logs.filter(l => l.type === 'error');
+	if (errors.length) lines.push(...errors.map(e => `ERROR: ${e.text.split('\n')[0]}`));
+	const prints = state.logs.filter(l => l.type === 'print');
+	if (prints.length) lines.push(`print: ${prints.slice(-5).map(l => l.text).join(' | ')}`);
+	for (const d of state.dialogs) lines.push(`DIALOG(${d.kind}): ${d.title ?? ''} ${d.text ?? ''}`.trim());
+	if (state.toasts.length) lines.push(`toasts: ${state.toasts.slice(-3).map(t => t.text).join(' | ')}`);
+	const walk = (n: UiNode, depth: number) => {
+		if (n.hidden) {
+			lines.push(`${'  '.repeat(depth)}${n.type}#${n.id} (hidden)`);
+			return;
+		}
+		// 盤面などが読めるよう、$[clickable.ev=名前 中身] は中身だけにする
+		const plain = typeof n.props.text === 'string' ? n.props.text.replace(/\$\[clickable\.ev=\S+ ([^\]]*)\]/g, '$1') : null;
+		const text = plain != null ? ` "${plain.replace(/\n/g, '⏎').slice(0, 120)}"` : '';
+		const buttons = Array.isArray(n.props.buttons) ? ` [${(n.props.buttons as { text: string; disabled?: boolean }[]).map(b => b.disabled ? `(${b.text})` : b.text).join(' / ')}]` : '';
+		const value = n.value !== undefined ? ` = ${JSON.stringify(n.value)}` : '';
+		if (n.type !== 'root') lines.push(`${'  '.repeat(depth)}${n.type}#${n.id}${text}${buttons}${value}`);
+		for (const c of n.children ?? []) walk(c, n.type === 'root' ? depth : depth + 1);
+	};
+	if (state.ui) walk(state.ui, 0);
+	return lines.join('\n');
+}
+
 export const playgroundApi = {
+	// 状態を短い文章で返す（エラー、出力、ダイアログ、UI ツリーを 1 行ずつ）
+	summary: summarize,
 	version: 1,
 	help: () => HELP,
 	getState,

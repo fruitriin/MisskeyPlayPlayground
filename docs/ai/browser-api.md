@@ -30,6 +30,7 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
 | 関数 | 説明 |
 | --- | --- |
 | `getState({ includeCode? })` | いまの状態を返す。`includeCode: false` でコードを省く |
+| `summary()` | 状態を短い文章で返す。エラー、`<:` の出力、ダイアログ、UI ツリー（部品の種類・id・文字・ボタン・入力欄の値）を 1 行ずつ並べる。ブラウザ操作の道具が受け取れる出力の長さに制限があるときに使う |
 | `getCode()` | エディタのコードを返す |
 | `setCode(code)` | エディタのコードを書き換える。実行はしない |
 | `run(code?, { timeout? })` | コードを実行して状態を返す。`code` を省くとエディタのコードを実行する。`timeout` の既定は 5000 ミリ秒 |
@@ -81,7 +82,7 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
 UiNode = {
   id: string,
   type: string,              // "button" や "textInput" など
-  hidden?: true,
+  hidden: boolean,           // container の hidden。ほかの部品は常に false
   props: object,             // 関数以外のプロパティ
   handlers: string[],        // 設定されているコールバックの名前（onClick など）。buttons は props.buttons の各要素にも handlers がある
   value?: string | number | boolean | null,  // 入力欄・switch・select の画面上の値
@@ -110,6 +111,11 @@ await page.locator('[data-testid="preview"]').screenshot({ path: 'preview.png' }
 スマホ幅（760px 未満）では「コード / プレビュー / コンソール」のタブで表示が切り替わります。`showPreview()` と `setScreenshotMode(true)` は、どちらもプレビューのタブに切り替えます。
 スクリーンショットモードの間も、`act` での操作はそのまま使えます。
 `[data-testid="console"]` でコンソールの欄も撮れます。
+
+## コードを渡すときの注意
+
+`run(code)` にコードを渡すとき、JavaScript のテンプレート文字列（`` ` ``）に入れるなら、AiScript のコードの中のバッククォートだけをエスケープしてください。AiScript の埋め込みは `{x}` なので、JavaScript の `${x}` とはぶつかりません。
+長いコードは、ファイルから読んで `JSON.stringify` した文字列を渡すと、貼り間違いが起きません。
 
 ## ダイアログを含む処理
 

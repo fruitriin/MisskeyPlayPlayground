@@ -12,6 +12,7 @@
 			</optgroup>
 		</select>
 		<div :class="$style.spacer"/>
+		<XButton small inline :class="[$style.headerButton, { [$style.liveOn]: live.status !== 'idle' }]" title="合言葉で、外からコードを読み書きできるようにする" @click="showLive = true">{{ live.status === 'idle' ? '🔗 ライブ共有' : '● ライブ共有中' }}</XButton>
 		<XButton small inline :class="$style.headerButton" title="ミニゲームの作り方" @click="showGuide = true">📖 ガイド</XButton>
 		<XButton small inline :class="$style.headerButton" title="共有用のリンクをコピー" @click="share">共有</XButton>
 		<XButton small inline :class="$style.headerButton" title="実行環境の設定" @click="showSettings = true">⚙ 設定</XButton>
@@ -67,6 +68,7 @@
 	</main>
 
 	<SettingsPanel v-if="showSettings" @close="showSettings = false"/>
+	<LivePanel v-if="showLive" @close="showLive = false"/>
 	<GuidePanel v-if="showGuide" @close="closeGuide" @run="openFromGuide" @sample="id => { closeGuide(); loadSample(id); }"/>
 	<Dialogs/>
 </div>
@@ -80,6 +82,8 @@ import UiTree from './components/UiTree.vue';
 import Dialogs from './components/Dialogs.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
 import GuidePanel from './components/GuidePanel.vue';
+import LivePanel from './components/LivePanel.vue';
+import { live, joinFromHash } from './live.js';
 import XButton from './components/ui/XButton.vue';
 import { allSamples, sampleGroups } from './allSamples.js';
 import { encodeCode, decodeCode } from './share.js';
@@ -90,6 +94,7 @@ import { code, mobileTab, screenshotMode } from './store.js';
 
 const showSettings = ref(false);
 const showGuide = ref(window.location.hash === '#guide');
+const showLive = ref(false);
 const bottomTab = ref<'console' | 'tree'>('console');
 const mobileTabs = [
 	{ id: 'editor', label: 'コード' },
@@ -164,6 +169,8 @@ onMounted(async () => {
 		}
 	}
 	run(code.value);
+	// #live=合言葉 で開いたら、その部屋につなぐ
+	joinFromHash();
 });
 </script>
 
@@ -204,6 +211,7 @@ onMounted(async () => {
 }
 .spacer { flex: 1; }
 .headerButton { min-width: 0 !important; }
+.liveOn { color: #ec4137 !important; font-weight: bold; }
 .main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
 .editorPane { min-height: 0; border-right: solid 1px var(--divider); }
 .rightPane { display: grid; grid-template-rows: minmax(0, 3fr) minmax(0, 2fr); min-height: 0; }

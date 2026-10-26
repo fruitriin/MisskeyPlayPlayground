@@ -5,3 +5,4 @@ public/ai
 .vercel
 .env*
 .wrangler
+worker/worker-configuration.d.ts

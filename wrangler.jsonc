@@ -1,9 +1,20 @@
-// Cloudflare Workers の Static Assets で dist/ を公開する設定（npm run deploy）
+// Cloudflare Workers の設定（npm run deploy で公開する）
+// - dist/ を静的ファイルとして配信する
+// - /api/* だけ worker/index.ts を先に通し、ライブ共有の API（Room = Durable Object）を動かす
 {
 	"name": "misskey-play-playground",
+	"main": "./worker/index.ts",
 	"compatibility_date": "2026-10-26",
 	"assets": {
 		"directory": "./dist",
-		"not_found_handling": "404-page"
+		"binding": "ASSETS",
+		"not_found_handling": "404-page",
+		"run_worker_first": ["/api/*"]
+	},
+	"durable_objects": {
+		"bindings": [{ "name": "ROOMS", "class_name": "Room" }]
+	},
+	"exports": {
+		"Room": { "type": "durable-object", "storage": "sqlite" }
 	}
 }

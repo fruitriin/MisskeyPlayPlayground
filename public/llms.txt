@@ -8,6 +8,7 @@
 - [Tips](./ai/tips.md): AiScript 1.2.1 と Play で間違えやすい点
 - [Play API リファレンス](./ai/play-api.md): Ui:C:* 部品のプロパティ、Mk:* 関数、定数
 - [ミニゲームの作り方](./ai/minigame.md): Play でゲームを作るときの構成と検証のしかた
+- [ライブ共有 API](./ai/live-api.md): ユーザーが画面で決めた合言葉を使い、HTTP（curl）でコードを送って実行し、結果を読み、UI を操作する。ブラウザを操作する仕組みがなくても使える
 - [ブラウザ操作 API](./ai/browser-api.md): window.__playground でコードを実行し、UI を JSON で操作する
 - [AiScript 文法](./ai/aiscript/syntax.md)
 - [標準関数](./ai/aiscript/std.md)

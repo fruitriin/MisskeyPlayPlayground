@@ -9,7 +9,9 @@
     "reference": "node scripts/build-reference.mjs",
     "predev": "npm run -s reference",
     "prebuild": "npm run -s reference",
-    "deploy": "npm run build && npx wrangler@latest deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "preview:worker": "npm run build && wrangler dev --port 8787",
+    "typecheck:worker": "wrangler types worker/worker-configuration.d.ts && tsc -p worker/tsconfig.json"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +36,7 @@
     "@vitejs/plugin-vue": "^6.0.10",
     "typescript": "~5.9",
     "vite": "^8.3.5",
-    "vue-tsc": "^3.3.13"
+    "vue-tsc": "^3.3.13",
+    "wrangler": "^4.152.0"
   }
 }

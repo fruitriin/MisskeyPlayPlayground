@@ -1,5 +1,5 @@
-// MFM の clickable
 /// @ 1.2.1
+// MFM の clickable
 // $[clickable.ev=名前 ...] をクリックすると onClickEv が呼ばれます
 let log = Ui:C:text({ text: "まだ何も押されていません" })
 

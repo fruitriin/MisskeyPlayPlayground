@@ -1,5 +1,5 @@
-// ダイアログと入力
 /// @ 1.2.1
+// ダイアログと入力
 // Mk:dialog / Mk:confirm / readline は実行を待ってから次に進みます
 Ui:render([
 	Ui:C:buttons({ buttons: [

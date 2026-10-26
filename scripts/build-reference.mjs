@@ -119,7 +119,10 @@ const { samples } = await import('../src/samples.ts');
 rmSync(new URL('docs/ai/examples/', root), { recursive: true, force: true });
 mkdirSync(new URL('docs/ai/examples/', root), { recursive: true });
 for (const sample of samples) {
-	writeFileSync(new URL(`docs/ai/examples/${sample.id}.ais`, root), `// ${sample.title}\n${sample.code}`);
+	// Misskey は 1 行目の `/// @ 1.2.1` しか読まないので、タイトルはその後ろに入れる
+	const [first, ...rest] = sample.code.split('\n');
+	const body = first.startsWith('/// @') ? [first, `// ${sample.title}`, ...rest] : [`// ${sample.title}`, first, ...rest];
+	writeFileSync(new URL(`docs/ai/examples/${sample.id}.ais`, root), body.join('\n'));
 }
 // ガイドの例（docs/guide/examples）も書き出す
 const copyAis = (dir, prefix) => readdirSync(new URL(dir, root)).filter(f => f.endsWith('.ais')).map(f => {

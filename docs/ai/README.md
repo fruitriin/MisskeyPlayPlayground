@@ -17,9 +17,3 @@ AiScript と Misskey Play のコードを書く・直す AI のための資料�
 | [examples/](examples/README.md) | 動作確認済みのサンプル（playground のサンプル一覧と同じもの） |
 
 `aiscript/` 以下は [aiscript-dev/aiscript-dev.github.io](https://github.com/aiscript-dev/aiscript-dev.github.io) の日本語リファレンスを MIT ライセンスのまま取り込んだものです（取り込んだ版は `aiscript/SOURCE` に記録しています）。
-
-## 再生成
-
-`npm run reference` で、`src/reference/std.json`（補完用）、`play-api.md`、`examples/`、公開用の `public/ai/` を作り直します。
-AiScript の新しい版に追従するときは、`aiscript/` を公式リポジトリの最新版で置き換えてから実行してください。
-スクリプトは、ドキュメントにあるのに処理系にない関数・処理系にあるのにドキュメントにない関数の一覧も表示します。

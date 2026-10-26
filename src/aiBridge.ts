@@ -1,7 +1,7 @@
 // AI や自動テストが、ブラウザ上の playground を JSON で読み書き・操作するための API。
 // window.__playground に置く。使い方は docs/ai/browser-api.md と help() を参照
 import { nextTick } from 'vue';
-import { code } from './store.js';
+import { code, mobileTab, screenshotMode } from './store.js';
 import { run, stop, logs, root, components, running, usedVersion, pendingCallbacks, trackCallback } from './runner.js';
 import { allSamples as samples } from './allSamples.js';
 import { settings } from './settings.js';
@@ -31,6 +31,9 @@ export type PlaygroundState = {
 	ui: UiNode | null;
 	dialogs: { kind: string; type?: string; title?: string; text?: string }[];
 	toasts: { text: string; time: string }[];
+	// act() が返す状態だけに付く。その act() の間に出たログとトースト
+	newLogs?: { type: string; text: string }[];
+	newToasts?: { text: string; time: string }[];
 };
 
 export type Action =
@@ -50,7 +53,9 @@ getState({ includeCode? })   いまの状態（ログ・UI ツリー・ダイア
 getCode() / setCode(code)    エディタのコードを読む・書く（setCode は実行しない）
 run(code?, { timeout? })     コードを実行し、落ち着いたら状態を返す（code を省くとエディタのコード）
 stop()                       実行を止める
-act(action | action[])       UI を操作し、コールバックが終わったら状態を返す
+showPreview()                スクリーンショットの前に、プレビューを表示して先頭までスクロールする
+setScreenshotMode(on)        true でプレビューだけを中身の高さで表示する（ページ全体を撮ると全部写る）
+act(action | action[])       UI を操作し、コールバックが終わったら状態を返す（newLogs / newToasts にその間の分）
 samples() / loadSample(id)   サンプルの一覧・読み込みと実行
 
 action の形:
@@ -74,7 +79,10 @@ function serializeProps(c: AsUiComponent): { props: Record<string, unknown>; han
 		if (typeof v === 'function') {
 			handlers.push(k);
 		} else if (k === 'buttons' && Array.isArray(v)) {
-			props.buttons = v.map((b: Record<string, unknown>) => Object.fromEntries(Object.entries(b).filter(([, x]) => typeof x !== 'function')));
+			props.buttons = v.map((b: Record<string, unknown>) => ({
+				...Object.fromEntries(Object.entries(b).filter(([, x]) => typeof x !== 'function')),
+				handlers: Object.entries(b).filter(([, x]) => typeof x === 'function').map(([k]) => k),
+			}));
 		} else if (v !== undefined) {
 			props[k] = v;
 		}
@@ -135,7 +143,7 @@ export function getState(opts: Options = {}): PlaygroundState {
 		dialogs: os.state.dialogs.map(d => d.kind === 'post'
 			? { kind: d.kind, text: d.form.initialText }
 			: d.kind === 'input' ? { kind: d.kind, title: d.title } : { kind: d.kind, type: d.type, title: d.title, text: d.text }),
-		toasts: os.state.toastHistory.slice(-10),
+		toasts: os.state.toastHistory.slice(-10).map(t => ({ text: t.text, time: t.time })),
 	};
 }
 
@@ -259,12 +267,30 @@ export const playgroundApi = {
 	},
 	async act(actions: Action | Action[], opts: Options = {}): Promise<PlaygroundState> {
 		const list = Array.isArray(actions) ? actions : [actions];
+		const lastLogId = logs.value.at(-1)?.id ?? -1;
+		const lastToastId = os.state.toastHistory.at(-1)?.id ?? -1;
 		let state = getState({ includeCode: false });
 		for (const action of list) {
 			perform(action);
 			state = await settle(action.type === 'wait' ? sleep(action.ms) : null, opts);
 		}
-		return state;
+		return {
+			...state,
+			newLogs: logs.value.filter(l => l.id > lastLogId).map(l => ({ type: l.type, text: l.text })),
+			newToasts: os.state.toastHistory.filter(t => t.id > lastToastId).map(t => ({ text: t.text, time: t.time })),
+		};
+	},
+	// スマホ幅ではプレビューのタブに切り替え、プレビューを先頭までスクロールする（スクリーンショットの前に呼ぶ）
+	async showPreview(): Promise<void> {
+		mobileTab.value = 'preview';
+		await nextTick();
+		document.querySelector('[data-testid="preview"]')?.scrollTo({ top: 0 });
+	},
+	// true にすると、ヘッダー・エディタ・コンソールを隠し、プレビューを中身の高さのまま表示する。ページ全体のスクリーンショットでプレビューが全部写る
+	async setScreenshotMode(on: boolean): Promise<void> {
+		screenshotMode.value = on;
+		if (on) mobileTab.value = 'preview';
+		await nextTick();
 	},
 	samples: () => samples.map(s => ({ id: s.id, title: s.title })),
 	async loadSample(id: string, opts: Options = {}): Promise<PlaygroundState> {

@@ -1,5 +1,5 @@
-// 投稿フォーム
 /// @ 1.2.1
+// 投稿フォーム
 // 既定ではモックサーバーに投稿します。⚙ 設定で実サーバーとトークンを指定すると、そのサーバーに投稿します
 Ui:render([
 	Ui:C:postFormButton({ text: "投稿フォームを開く", primary: true, rounded: true, form: { text: "AiScript から投稿 #aiscript", cw: "テスト", visibility: "home" } }),

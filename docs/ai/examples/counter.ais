@@ -1,5 +1,5 @@
-// カウンター（update）
 /// @ 1.2.1
+// カウンター（update）
 // 部品の update() で表示を書き換えます
 var count = 0
 let label = Ui:C:text({ text: `count: {count}`, size: 2 })

@@ -23,6 +23,8 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
 
 部品の id は、`Ui:C:*` の第2引数で付けたものがそのまま使えます。付けていない部品は、`state.ui` から自動で付いた id を探してください。
 
+コードの 1 行目には `/// @ 1.2.1` を書いてください。書かないと、Misskey Play と同じく AiScript 0.19.0 で実行されます（コンソールに注意が出ます）。
+
 ## 関数
 
 | 関数 | 説明 |
@@ -32,11 +34,14 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
 | `setCode(code)` | エディタのコードを書き換える。実行はしない |
 | `run(code?, { timeout? })` | コードを実行して状態を返す。`code` を省くとエディタのコードを実行する。`timeout` の既定は 5000 ミリ秒 |
 | `stop()` | 実行を止める |
+| `setScreenshotMode(on)` | `true` にすると、ヘッダー・エディタ・コンソールを隠し、プレビューだけを中身の高さのまま表示する。`false` で元に戻す |
+| `showPreview()` | プレビューを表示して先頭までスクロールする。スクリーンショットの前に呼ぶ（スマホ幅ではプレビューのタブに切り替わる） |
 | `act(action または action の配列, { timeout? })` | UI を順に操作し、最後の状態を返す |
 | `samples()` | サンプルの `{ id, title }` の一覧を返す |
 | `loadSample(id)` | サンプルを読み込んで実行する |
 
 `run` と `act` が返す状態には、既定ではコードを含めません。
+`act` が返す状態には、その `act` の間に出たログとトーストだけを集めた `newLogs` と `newToasts` も付きます。
 
 ## action
 
@@ -68,6 +73,8 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
   ui: UiNode | null,         // Ui:root から表示中の部品をたどった木
   dialogs: { kind: "alert" | "confirm" | "input" | "post", type?, title?, text? }[],
   toasts: { text: string, time: string }[],  // この実行で出たトーストの最新 10 件
+  newLogs?: [...],           // act() のときだけ。その act() の間に出たログ
+  newToasts?: [...],         // act() のときだけ。その act() の間に出たトースト
 }
 
 UiNode = {
@@ -75,11 +82,33 @@ UiNode = {
   type: string,              // "button" や "textInput" など
   hidden?: true,
   props: object,             // 関数以外のプロパティ
-  handlers: string[],        // 設定されているコールバックの名前（onClick など）
+  handlers: string[],        // 設定されているコールバックの名前（onClick など）。buttons は props.buttons の各要素にも handlers がある
   value?: string | number | boolean | null,  // 入力欄・switch・select の画面上の値
   children?: UiNode[],
 }
 ```
+
+`handlers` の注意: `Ui:C:mfm` は、`onClickEv` を渡していなくても常に `onClickEv` が出ます（Misskey 本体の実装でも、空の関数が入るため）。押せる箇所があるかは、`props.text` に `$[clickable` があるかで判断してください。
+
+## スクリーンショット
+
+プレビューは、スクロールする枠（`[data-testid="preview"]`）の中に表示されます。ページ全体を撮っても、枠の外にはみ出した部分は写りません。
+次の手順で撮ってください（Playwright の例）。
+
+```js
+// プレビューの中身を全部撮る（おすすめ）
+await page.evaluate(() => window.__playground.setScreenshotMode(true));
+await page.screenshot({ path: 'ui.png', fullPage: true });
+await page.evaluate(() => window.__playground.setScreenshotMode(false));
+
+// 画面に見えている範囲だけでよいとき
+await page.evaluate(() => window.__playground.showPreview());
+await page.locator('[data-testid="preview"]').screenshot({ path: 'preview.png' });
+```
+
+スマホ幅（760px 未満）では「コード / プレビュー / コンソール」のタブで表示が切り替わります。`showPreview()` と `setScreenshotMode(true)` は、どちらもプレビューのタブに切り替えます。
+スクリーンショットモードの間も、`act` での操作はそのまま使えます。
+`[data-testid="console"]` でコンソールの欄も撮れます。
 
 ## ダイアログを含む処理
 

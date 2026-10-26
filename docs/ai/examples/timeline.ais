@@ -1,5 +1,5 @@
-// タイムラインとリアクション（Mk:api）
 /// @ 1.2.1
+// タイムラインとリアクション（Mk:api）
 // モックサーバーのタイムラインを読み、リアクションと投稿をします
 let list = Ui:C:container({ children: [] })
 let input = Ui:C:textInput({ label: "ノートを書く", onInput: @(v) { draft = v } })

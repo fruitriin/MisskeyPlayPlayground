@@ -1,5 +1,5 @@
 <template>
-<div :class="$style.app">
+<div :class="[$style.app, { [$style.screenshotMode]: screenshotMode }]">
 	<header :class="$style.header">
 		<div :class="$style.logo">
 			<span :class="$style.logoMark">▶</span>
@@ -34,7 +34,7 @@
 					<span>プレビュー</span>
 					<span v-if="usedVersion" :class="$style.badge">AiScript {{ usedVersion }}</span>
 				</div>
-				<div :class="$style.previewBody">
+				<div :class="$style.previewBody" data-testid="preview">
 					<AsUi v-if="root && root.children?.length" :key="runKey" :component="root" :components="components" size="medium"/>
 					<div v-else :class="$style.empty">
 						<p>コードを書いて <b>▶ 実行</b>（Cmd/Ctrl + Enter）すると、Ui:render の結果がここに出ます。</p>
@@ -51,7 +51,7 @@
 					<div :class="$style.spacer"/>
 					<button v-if="bottomTab === 'console'" type="button" :class="$style.tab" @click="clearLogs">クリア</button>
 				</div>
-				<div v-if="bottomTab === 'console'" ref="consoleEl" :class="$style.console">
+				<div v-if="bottomTab === 'console'" ref="consoleEl" :class="$style.console" data-testid="console">
 					<div v-for="log in logs" :key="log.id" :class="[$style.log, $style[`log_${log.type}`]]">
 						<span :class="$style.logMark">{{ logMarks[log.type] }}</span>
 						<span :class="$style.logText">{{ log.text }}</span>
@@ -86,12 +86,11 @@ import { encodeCode, decodeCode } from './share.js';
 import { settings } from './settings.js';
 import { run, stop, clearLogs, logs, root, components, runKey, running, usedVersion } from './runner.js';
 import * as os from './os.js';
-import { code } from './store.js';
+import { code, mobileTab, screenshotMode } from './store.js';
 
 const showSettings = ref(false);
 const showGuide = ref(window.location.hash === '#guide');
 const bottomTab = ref<'console' | 'tree'>('console');
-const mobileTab = ref<'editor' | 'preview' | 'console'>('editor');
 const mobileTabs = [
 	{ id: 'editor', label: 'コード' },
 	{ id: 'preview', label: 'プレビュー' },
@@ -237,6 +236,12 @@ onMounted(async () => {
 .log_error .logMark { color: #ec4137; }
 .log_info .logText { color: var(--syntaxNamespace); }
 .mobileTabs { display: none; }
+/* スクリーンショット用: プレビューだけを、中身の高さのまま表示する */
+.screenshotMode { height: auto; }
+.screenshotMode .header, .screenshotMode .mobileTabs, .screenshotMode .editorPane, .screenshotMode .consolePane, .screenshotMode .paneTitle { display: none !important; }
+.screenshotMode .main, .screenshotMode .rightPane { display: block; }
+.screenshotMode .previewPane { display: block !important; }
+.screenshotMode .previewBody { overflow: visible; }
 
 @media (max-width: 760px) {
 	.header { padding: 8px 16px; }

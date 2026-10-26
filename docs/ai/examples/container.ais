@@ -1,5 +1,5 @@
-// container の装飾
 /// @ 1.2.1
+// container の装飾
 Ui:render([
 	Ui:C:container({
 		align: "center",

@@ -14,6 +14,7 @@
 - [Math](./ai/aiscript/std-math.md)
 - [組み込みプロパティ](./ai/aiscript/builtin-props.md)
 - [リテラル](./ai/aiscript/literals.md)
+- [予約語](./ai/aiscript/keywords.md)
 
 ## サンプル
 

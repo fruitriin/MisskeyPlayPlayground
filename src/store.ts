@@ -14,6 +14,12 @@ function load(): string | null {
 
 export const code = ref(load() ?? samples[0].code);
 
+// スマホ幅で表示しているタブ
+export const mobileTab = ref<'editor' | 'preview' | 'console'>('editor');
+
+// スクリーンショット用に、プレビューだけを本来の高さで表示する
+export const screenshotMode = ref(false);
+
 watch(code, v => {
 	try {
 		localStorage.setItem(CODE_KEY, v);

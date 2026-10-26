@@ -1,5 +1,5 @@
-// Mk:save / Mk:load
 /// @ 1.2.1
+// Mk:save / Mk:load
 // Mk:save の値はブラウザに保存され、再実行しても残ります
 let saved = Mk:load("visits")
 var visits = if saved == null 0 else saved

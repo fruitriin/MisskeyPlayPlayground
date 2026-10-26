@@ -112,12 +112,16 @@ export async function run(code: string) {
 	os.state.toastHistory = [];
 
 	// 本家の Play と同じく、0.x 系の書き方なら 0.19.0 の処理系で動かす
+	// Misskey Play と同じく、1 行目に `/// @ バージョン` がなければ 0.19.0 で実行する
 	const version = utils1.getLangVersion(code);
-	const isLegacy = version != null && compareVersions(version, '1.0.0') < 0;
+	const isLegacy = version == null || compareVersions(version, '1.0.0') < 0;
 	const { Interpreter, Parser, values, utils } = (isLegacy
 		? await import('@syuilo/aiscript-0-19-0')
 		: await import('@syuilo/aiscript')) as typeof import('@syuilo/aiscript');
 	usedVersion.value = isLegacy ? '0.19.0' : '1.2.1';
+	if (version == null) {
+		pushLog('info', '1 行目に `/// @ 1.2.1` がないため、Misskey Play と同じく AiScript 0.19.0 で実行しました');
+	}
 
 	const customEmojis = await loadCustomEmojis();
 	const pageUrl = window.location.origin + window.location.pathname;

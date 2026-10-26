@@ -18,6 +18,6 @@ AiScript と Misskey Play の UI 関数をブラウザで試せる playground（
 - `npm run dev` で起動、`npm run build` で型チェックとビルド
 - `npm run reference` で補完データと AI 向け資料を再生成する。`src/reference/play.json` か `docs/ai/aiscript/` を変えたら実行する
 - `src/aiscript/ui.ts`・`common.ts`・`src/components/AsUi.vue` は Misskey 本体からの移植。挙動は本体に合わせ、独自の拡張を入れない
-- ミニゲームは `src/games/*.ais` に置き、`src/games/index.ts` に登録する。人向けのガイドは `docs/guide/minigame.md`（例は `docs/guide/examples/*.ais`）で、画面の「📖 ガイド」から開く
+- 人向けのミニゲームのガイドは `docs/guide/minigame.md`（例は `docs/guide/examples/*.ais`）で、画面の「📖 ガイド」から開く
 - `src/aiBridge.ts` が `window.__playground` の実装。`AsUi.vue` の `data-as-id` 属性と `trackCallback` に依存している
 - Mk:api のモックは `src/mock/api.ts`。エンドポイントを足すときは Misskey と同じ形のレスポンスにする

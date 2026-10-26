@@ -2,6 +2,8 @@
 
 AiScript と Misskey Play の UI 関数（`Ui:` / `Mk:`）をブラウザで試せる playground です。
 
+公開版: https://misskey-play-playground.vercel.app/ （AI 向けの入口は https://misskey-play-playground.vercel.app/llms.txt ）
+
 ## 起動
 
 ```sh
@@ -9,7 +11,8 @@ npm install
 npm run dev
 ```
 
-`npm run build` で `dist/` に静的ファイルを出力します。`base: './'` なので、GitHub Pages などのサブパスにもそのまま置けます。
+`npm run build` で `dist/` に静的ファイルを出力します。`base: './'` なので、サブパスにもそのまま置けます。
+公開版は Vercel（プロジェクト名 `misskey-play-playground`）に置いています。手元から更新するときは `npx vercel@latest deploy --prod` を実行します。
 
 ## できること
 

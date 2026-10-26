@@ -1,0 +1,9 @@
+// Cloudflare Workers の Static Assets で dist/ を公開する設定（npm run deploy）
+{
+	"name": "misskey-play-playground",
+	"compatibility_date": "2026-10-26",
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "404-page"
+	}
+}

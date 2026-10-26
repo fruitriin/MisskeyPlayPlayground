@@ -4,3 +4,4 @@ dist
 public/ai
 .vercel
 .env*
+.wrangler

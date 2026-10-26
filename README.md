@@ -2,7 +2,7 @@
 
 AiScript と Misskey Play の UI 関数（`Ui:` / `Mk:`）をブラウザで試せる playground です。
 
-公開版: https://misskey-play-playground.vercel.app/ （AI 向けの入口は https://misskey-play-playground.vercel.app/llms.txt ）
+公開版: https://misskey-play-playground.riinsworkspace.workers.dev/ （AI 向けの入口は https://misskey-play-playground.riinsworkspace.workers.dev/llms.txt ）
 
 ## 起動
 
@@ -12,7 +12,7 @@ npm run dev
 ```
 
 `npm run build` で `dist/` に静的ファイルを出力します。`base: './'` なので、サブパスにもそのまま置けます。
-公開版は Vercel（プロジェクト名 `misskey-play-playground`）に置いています。手元から更新するときは `npx vercel@latest deploy --prod` を実行します。
+公開版は Cloudflare Workers の Static Assets（Worker 名 `misskey-play-playground`、設定は `wrangler.jsonc`）に置いています。手元から更新するときは `npm run deploy` を実行します（wrangler へのログインが必要です）。
 
 ## できること
 

@@ -8,7 +8,8 @@
     "preview": "vite preview",
     "reference": "node scripts/build-reference.mjs",
     "predev": "npm run -s reference",
-    "prebuild": "npm run -s reference"
+    "prebuild": "npm run -s reference",
+    "deploy": "npm run build && npx wrangler@latest deploy"
   },
   "keywords": [],
   "author": "",

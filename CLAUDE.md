@@ -15,7 +15,7 @@ AiScript と Misskey Play の UI 関数をブラウザで試せる playground（
 
 ## 開発
 
-- `npm run dev` で起動、`npm run build` で型チェックとビルド
+- `npm run dev` で起動、`npm run build` で型チェックとビルド、`npm run deploy` で Cloudflare Workers の公開版を更新する
 - `npm run reference` で補完データと AI 向け資料を再生成する。`src/reference/play.json` か `docs/ai/aiscript/` を変えたら実行する。AiScript の新しい版に追従するときは、`docs/ai/aiscript/` を公式リポジトリ（aiscript-dev/aiscript-dev.github.io）の最新版で置き換えてから実行する。実行すると、ドキュメントと処理系の関数の食い違いも表示される
 - `src/aiscript/ui.ts`・`common.ts`・`src/components/AsUi.vue` は Misskey 本体からの移植。挙動は本体に合わせ、独自の拡張を入れない
 - 人向けのミニゲームのガイドは `docs/guide/minigame.md`（例は `docs/guide/examples/*.ais`）で、画面の「📖 ガイド」から開く

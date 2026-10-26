@@ -47,6 +47,9 @@ export type Action =
 
 type Options = { timeout?: number; includeCode?: boolean };
 
+// Mk:save が使う localStorage のキーの頭（src/aiscript/api.ts の storageKey と同じ）
+const STORAGE_PREFIX = 'aiscript:playground:';
+
 const HELP = `window.__playground: Misskey Play Playground を JSON で操作する API
 
 getState({ includeCode? })   いまの状態（ログ・UI ツリー・ダイアログ・トースト）を返す
@@ -57,6 +60,7 @@ showPreview()                スクリーンショットの前に、プレビュ
 setScreenshotMode(on)        true でプレビューだけを中身の高さで表示する（ページ全体を撮ると全部写る）
 act(action | action[])       UI を操作し、コールバックが終わったら状態を返す（newLogs / newToasts にその間の分）
 samples() / loadSample(id)   サンプルの一覧・読み込みと実行
+storage.keys/get/set/remove/clear   Mk:save で保存した値を読み書きする（テストで好きな場面から始めるのに使う）
 
 action の形:
   { type: "click", id, index?, text? }  button / buttons（index か text で選ぶ）/ postFormButton / folder
@@ -291,6 +295,25 @@ export const playgroundApi = {
 		screenshotMode.value = on;
 		if (on) mobileTab.value = 'preview';
 		await nextTick();
+	},
+	// Mk:save の保存先（localStorage の aiscript:playground:<キー>）を読み書きする。テストで好きな場面から始めるのに使う
+	storage: {
+		keys(): string[] {
+			return Object.keys(localStorage).filter(k => k.startsWith(STORAGE_PREFIX)).map(k => k.slice(STORAGE_PREFIX.length));
+		},
+		get(key: string): unknown {
+			const raw = localStorage.getItem(STORAGE_PREFIX + key);
+			return raw == null ? null : JSON.parse(raw);
+		},
+		set(key: string, value: unknown): void {
+			localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+		},
+		remove(key: string): void {
+			localStorage.removeItem(STORAGE_PREFIX + key);
+		},
+		clear(): void {
+			for (const k of Object.keys(localStorage)) if (k.startsWith(STORAGE_PREFIX)) localStorage.removeItem(k);
+		},
 	},
 	samples: () => samples.map(s => ({ id: s.id, title: s.title })),
 	async loadSample(id: string, opts: Options = {}): Promise<PlaygroundState> {

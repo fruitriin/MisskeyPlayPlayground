@@ -28,7 +28,8 @@ const emit = defineEmits<{ (e: 'click', ev: MouseEvent): void }>();
 	font: inherit;
 	font-size: 95%;
 	text-align: center;
-	color: var(--fg);
+	/* Misskey の MkButton と同じく、文字色は親（container の fgColor など）から引き継ぎ、背景はテーマのボタン色にする */
+	color: inherit;
 	background: var(--buttonBg);
 	border: none;
 	border-radius: 5px;

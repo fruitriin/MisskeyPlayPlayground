@@ -38,6 +38,7 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
 | `showPreview()` | プレビューを表示して先頭までスクロールする。スクリーンショットの前に呼ぶ（スマホ幅ではプレビューのタブに切り替わる） |
 | `act(action または action の配列, { timeout? })` | UI を順に操作し、最後の状態を返す |
 | `samples()` | サンプルの `{ id, title }` の一覧を返す |
+| `storage.keys()` / `storage.get(key)` / `storage.set(key, value)` / `storage.remove(key)` / `storage.clear()` | `Mk:save` で保存した値を読み書きする。値はそのまま（JSON に変換せずに）渡す。セーブを書き換えて、好きな場面からテストを始めるのに使う |
 | `loadSample(id)` | サンプルを読み込んで実行する |
 
 `run` と `act` が返す状態には、既定ではコードを含めません。
@@ -121,6 +122,17 @@ let s = await window.__playground.act({ type: "click", id: "ask" });
 s.dialogs; // [{ kind: "input", title: "お名前は？" }]
 s = await window.__playground.act({ type: "dialog", answer: "藍" });
 ```
+
+## 長い自動プレイ
+
+`act` に何百もの操作を一度に渡すと、ブラウザを操作するツールの応答待ち（多くは数十秒）を超えることがあります。
+
+- 1 回の `act` に渡す操作は数十個までにし、ツールの呼び出しを分けて繰り返してください
+- ページの中で自分でループを回すときは、止めるための目印（例: `window.__stopAutoplay = true` で抜ける）を最初から入れておいてください。走り出したループは、外から止める方法がありません
+- `Mk:save` で保存した値は、`storage` で直接書き換えられます。途中の場面から始めれば、長いプレイを毎回最初からやり直さずに済みます
+
+保存先は `localStorage` の `aiscript:playground:<キー>` で、値は `JSON.stringify` した文字列です（`storage` を使えば変換は要りません）。
+Misskey 本体では、保存先が Play ごとに分かれます。
 
 ## 無限ループ
 

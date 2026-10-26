@@ -4,6 +4,7 @@ import 'mfm-renderer/style.css';
 import App from './App.vue';
 import { normalizedServerUrl } from './settings.js';
 import { customEmojiMap } from './runner.js';
+import { installAiBridge } from './aiBridge.js';
 import './style.css';
 
 const app = createApp(App);
@@ -14,3 +15,4 @@ app.provide('domain', computed(() => normalizedServerUrl()?.replace(/^https?:\/\
 app.provide('emojis', customEmojiMap);
 app.provide('debugMode', false);
 app.mount('#app');
+installAiBridge();

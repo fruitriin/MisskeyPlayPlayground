@@ -81,10 +81,8 @@ import { encodeCode, decodeCode } from './share.js';
 import { settings } from './settings.js';
 import { run, stop, clearLogs, logs, root, components, runKey, running, usedVersion } from './runner.js';
 import * as os from './os.js';
+import { code } from './store.js';
 
-const CODE_KEY = 'aiscript-playground:code';
-
-const code = ref(localStorage.getItem(CODE_KEY) ?? samples[0].code);
 const showSettings = ref(false);
 const bottomTab = ref<'console' | 'tree'>('console');
 const mobileTab = ref<'editor' | 'preview' | 'console'>('editor');
@@ -97,14 +95,6 @@ const consoleEl = ref<HTMLElement>();
 
 const logMarks = { print: '›', end: '←', error: '✕', info: 'i' } as const;
 const errorCount = computed(() => logs.value.filter(l => l.type === 'error').length);
-
-watch(code, v => {
-	try {
-		localStorage.setItem(CODE_KEY, v);
-	} catch {
-		// 保存できない環境では何もしない
-	}
-});
 
 watch(() => logs.value.length, async () => {
 	await nextTick();

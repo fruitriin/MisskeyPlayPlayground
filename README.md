@@ -22,6 +22,7 @@ npm run dev
 - URL の hash にコードを圧縮して入れる共有リンク、localStorage への自動保存
 - エディタの補完とホバー時のヒント（標準関数・`Ui:`/`Mk:` 関数・`Ui:C:*` のプロパティ・組み込みプロパティ）
 - `Mk:api` 用のモックサーバー（ブラウザ内で動作、既定）
+- `window.__playground` でコードの実行と UI の操作を JSON でできる（[docs/ai/browser-api.md](docs/ai/browser-api.md)）
 - AI 向けの資料一式（`docs/ai/`、公開サイトでは `/llms.txt` から辿れる）
 
 ## API の接続先

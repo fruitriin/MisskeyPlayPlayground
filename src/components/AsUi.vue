@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div>
+<div :data-as-id="c.id" :data-as-type="c.type">
 	<div v-if="c.type === 'root'" :class="$style.root">
 		<template v-for="child in c.children" :key="child">
 			<AsUi v-if="!g(child).hidden" :component="g(child)" :components="props.components" :size="size"/>
@@ -13,11 +13,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<span v-else-if="c.type === 'text'" :class="{ [$style.fontSerif]: c.font === 'serif', [$style.fontMonospace]: c.font === 'monospace' }" :style="{ fontSize: c.size ? `${c.size * 100}%` : undefined, fontWeight: c.bold ? 'bold' : undefined, color: c.color }">{{ c.text }}</span>
 	<span v-else-if="c.type === 'mfm'" :class="[$style.mfm, { [$style.fontSerif]: c.font === 'serif', [$style.fontMonospace]: c.font === 'monospace' }]" :style="{ fontSize: c.size ? `${c.size * 100}%` : undefined, fontWeight: c.bold ? 'bold' : undefined, color: c.color ?? undefined }">
-		<MfmRenderer :text="c.text ?? ''" @clickEv="(ev: string) => c.type === 'mfm' && c.onClickEv?.(ev)"/>
+		<MfmRenderer :text="c.text ?? ''" @clickEv="(ev: string) => c.type === 'mfm' && trackCallback(c.onClickEv?.(ev))"/>
 	</span>
-	<XButton v-else-if="c.type === 'button'" :primary="c.primary" :rounded="c.rounded" :disabled="c.disabled" :small="size === 'small'" inline @click="c.onClick">{{ c.text }}</XButton>
+	<XButton v-else-if="c.type === 'button'" :primary="c.primary" :rounded="c.rounded" :disabled="c.disabled" :small="size === 'small'" inline @click="trackCallback(c.onClick?.())">{{ c.text }}</XButton>
 	<div v-else-if="c.type === 'buttons'" :class="$style.buttons" :style="{ justifyContent: align }">
-		<XButton v-for="button in c.buttons" :primary="button.primary" :rounded="button.rounded" :disabled="button.disabled" inline :small="size === 'small'" @click="button.onClick">{{ button.text }}</XButton>
+		<XButton v-for="button in c.buttons" :primary="button.primary" :rounded="button.rounded" :disabled="button.disabled" inline :small="size === 'small'" @click="trackCallback(button.onClick?.())">{{ button.text }}</XButton>
 	</div>
 	<XSwitch v-else-if="c.type === 'switch'" :modelValue="valueForSwitch" @update:modelValue="onSwitchUpdate">
 		<template v-if="c.label" #label>{{ c.label }}</template>
@@ -74,6 +74,8 @@ import XTextarea from '@/components/ui/XTextarea.vue';
 import XSelect from '@/components/ui/XSelect.vue';
 import XFolder from '@/components/ui/XFolder.vue';
 import PostForm from '@/components/PostForm.vue';
+// AI 向けの操作 API が、コールバックの終わりを待てるようにする（Misskey 本体にはない）
+import { trackCallback } from '@/runner.js';
 
 defineOptions({ name: 'AsUi' });
 
@@ -125,7 +127,7 @@ const containerStyle = computed(() => {
 
 function onInput(v: string | number) {
 	if ('onInput' in c && c.onInput) {
-		c.onInput(v as never);
+		trackCallback(c.onInput(v as never));
 	}
 }
 
@@ -134,7 +136,7 @@ const valueForSwitch = ref('default' in c && typeof c.default === 'boolean' ? c.
 function onSwitchUpdate(v: boolean) {
 	valueForSwitch.value = v;
 	if ('onChange' in c && c.onChange) {
-		c.onChange(v as never);
+		trackCallback(c.onChange(v as never));
 	}
 }
 
@@ -151,7 +153,7 @@ const valueForSelect = ref<string | null>((c.type === 'select' && 'default' in c
 function onSelectUpdate(v: string | null) {
 	valueForSelect.value = v;
 	if ('onChange' in c && c.onChange) {
-		c.onChange(v as never);
+		trackCallback(c.onChange(v as never));
 	}
 }
 

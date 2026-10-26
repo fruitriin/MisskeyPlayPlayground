@@ -28,6 +28,17 @@ export const usedVersion = ref<string>('');
 
 const interpreter = shallowRef<Interpreter | null>(null);
 
+// 実行中の UI コールバック（onClick など）の数。AI 向けの操作 API が完了を待つのに使う
+export const pendingCallbacks = ref(0);
+
+export function trackCallback(p: Promise<unknown> | undefined): void {
+	if (!p) return;
+	pendingCallbacks.value++;
+	p.finally(() => {
+		pendingCallbacks.value--;
+	});
+}
+
 function pushLog(type: LogEntry['type'], text: string) {
 	logs.value.push({ id: logId++, type, text, time: new Date() });
 }
@@ -97,6 +108,8 @@ export async function run(code: string) {
 	components.value = [];
 	runKey.value++;
 	logs.value = [];
+	pendingCallbacks.value = 0;
+	os.state.toastHistory = [];
 
 	// 本家の Play と同じく、0.x 系の書き方なら 0.19.0 の処理系で動かす
 	const version = utils1.getLangVersion(code);

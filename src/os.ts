@@ -22,6 +22,8 @@ let nextId = 0;
 export const state = reactive({
 	dialogs: [] as Dialog[],
 	toasts: [] as { id: number; text: string }[],
+	// 表示し終わったものも含めた、最近のトースト（AI 向けの操作 API が返す）
+	toastHistory: [] as { text: string; time: string }[],
 });
 
 function push<T>(make: (resolve: (v: T) => void) => Dialog): Promise<T> {
@@ -55,6 +57,8 @@ export function post(form: PostFormInit): Promise<void> {
 export function toast(text: string) {
 	const id = nextId++;
 	state.toasts.push({ id, text });
+	state.toastHistory.push({ text, time: new Date().toISOString() });
+	if (state.toastHistory.length > 20) state.toastHistory.shift();
 	setTimeout(() => {
 		state.toasts = state.toasts.filter(t => t.id !== id);
 	}, 4000);

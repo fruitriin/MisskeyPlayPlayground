@@ -12,6 +12,7 @@ AiScript と Misskey Play のコードを書く・直す AI のための資料�
 | [aiscript/std.md](aiscript/std.md) | 標準関数（`Core:` `Str:` `Arr:` `Obj:` `Json:` `Date:` など） |
 | [aiscript/std-math.md](aiscript/std-math.md) | `Math:` の関数と定数 |
 | [aiscript/builtin-props.md](aiscript/builtin-props.md) | 値のプロパティとメソッド（`arr.map`、`str.len` など） |
+| [browser-api.md](browser-api.md) | ブラウザ上の playground を JSON で読み書き・操作する `window.__playground` の使い方 |
 | [examples/](examples/README.md) | 動作確認済みのサンプル（playground のサンプル一覧と同じもの） |
 
 `aiscript/` 以下は [aiscript-dev/aiscript-dev.github.io](https://github.com/aiscript-dev/aiscript-dev.github.io) の日本語リファレンスを MIT ライセンスのまま取り込んだものです（取り込んだ版は `aiscript/SOURCE` に記録しています）。

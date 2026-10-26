@@ -1,0 +1,14 @@
+// Mk:api でサーバー情報
+/// @ 1.2.1
+// 既定では同梱のモックサーバーに問い合わせます。⚙ 設定で実際のサーバーに切り替えられます
+let res = Mk:api("meta", { detail: false })
+
+if Core:type(res) == "error" {
+	Ui:render([Ui:C:mfm({ text: `$[fg.color=e44 エラー] {Json:stringify(res.info)}` })])
+} else {
+	Ui:render([
+		Ui:C:text({ text: if res.name == null "(名前なし)" else res.name, size: 1.5, bold: true }),
+		Ui:C:mfm({ text: if res.description == null "" else res.description }),
+		Ui:C:text({ text: `version {res.version}` }),
+	])
+}

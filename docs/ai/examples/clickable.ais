@@ -1,0 +1,15 @@
+// MFM の clickable
+/// @ 1.2.1
+// $[clickable.ev=名前 ...] をクリックすると onClickEv が呼ばれます
+let log = Ui:C:text({ text: "まだ何も押されていません" })
+
+Ui:render([
+	Ui:C:mfm({
+		text: "好きなのは $[clickable.ev=apple 🍎りんご] / $[clickable.ev=grape 🍇ぶどう] / $[clickable.ev=peach 🍑もも]",
+		size: 1.2,
+		onClickEv: @(id) {
+			log.update({ text: `{id} が押されました` })
+		},
+	}),
+	log,
+])

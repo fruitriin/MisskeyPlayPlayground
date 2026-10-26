@@ -1,0 +1,18 @@
+# AiScript Playground
+
+> AiScript と Misskey Play の UI 関数（Ui: / Mk:）をブラウザで試せる playground。AI がコードを書くための資料を ./ai/ に置いている。
+
+## 資料
+
+- [AI 向け資料の入口](./ai/README.md): 読む順番の案内
+- [Tips](./ai/tips.md): AiScript 1.2.1 と Play で間違えやすい点
+- [Play API リファレンス](./ai/play-api.md): Ui:C:* 部品のプロパティ、Mk:* 関数、定数
+- [AiScript 文法](./ai/aiscript/syntax.md)
+- [標準関数](./ai/aiscript/std.md)
+- [Math](./ai/aiscript/std-math.md)
+- [組み込みプロパティ](./ai/aiscript/builtin-props.md)
+- [リテラル](./ai/aiscript/literals.md)
+
+## サンプル
+
+- [サンプル一覧](./ai/examples/README.md): 動作確認済みの .ais ファイル

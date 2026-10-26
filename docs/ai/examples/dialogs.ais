@@ -1,0 +1,19 @@
+// ダイアログと入力
+/// @ 1.2.1
+// Mk:dialog / Mk:confirm / readline は実行を待ってから次に進みます
+Ui:render([
+	Ui:C:buttons({ buttons: [
+		{ text: "dialog", onClick: @() { Mk:dialog("おしらせ", "これは Mk:dialog です", "info") } },
+		{ text: "confirm", onClick: @() {
+			if Mk:confirm("確認", "続けますか？") {
+				Mk:toast("はい が選ばれました")
+			} else {
+				Mk:toast("いいえ が選ばれました")
+			}
+		} },
+		{ text: "readline", primary: true, onClick: @() {
+			let name = readline("お名前は？")
+			Mk:dialog(`こんにちは、{name} さん`, Mk:nyaize("なんでもないです"), "success")
+		} },
+	] }),
+])

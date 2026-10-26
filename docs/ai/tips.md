@@ -1,0 +1,56 @@
+# AiScript / Misskey Play を書くときの Tips
+
+AI がコードを書くときに間違えやすい点を、AiScript 1.2.1 で実際に確かめてまとめたものです。
+文法そのものは [aiscript/syntax.md](aiscript/syntax.md)、Play の関数は [play-api.md](play-api.md) を見てください。
+
+## まず確認すること
+
+- 1行目に `/// @ 1.2.1` を書く。`/// @ 0.x.x` と書くと、Misskey は 0.19.0 の処理系で実行する（書き方が違う）
+- 文字列の連結に `+` は使えない。`"a" + "b"` は `Expect number, but got str.` になる。テンプレート文字列 `` `{a}{b}` `` か `[a, b].join()` を使う
+- `??`（null 合体）と `?.`（オプショナルチェーン）はない。構文エラーになる。`if x == null "既定値" else x` と書く
+- `if` は式なので値を返す。`else` がないと、条件が false のとき `null` を返す
+- `if`・`for`・`each`・`while` の直後と、ブロックの `{` の直前には空白が必要。`if(x)` や `for 5{` は構文エラーになる
+- `return` は関数の中でしか書けない。トップレベルで処理を打ち切りたいときは、全体を関数にするか `Core:abort` を使う
+- オブジェクトと配列の要素は `,` でも改行でも区切れる
+- `==` はオブジェクトや配列を中身ではなく参照で比べる。`{a:1} == {a:1}` は `false` になる
+- 配列の範囲外を読むとエラーになる（`Index out of range`）。オブジェクトにないキーを読むと `null` が返る
+- `for let i = 1, 10` は「1 から 10 回」ループする（i は 1〜10）。「1 から 10 まで」ではない点に注意する
+- 関数の中から外側の `var` に代入できる。`let` で宣言した変数には代入できない
+- 文字列の n 文字目は `s.pick(n)`、長さは `s.len`、数値への変換は `s.to_num()`（変換できなければ `null`）
+- 改行文字は `Str:lf`。テンプレート文字列の中で改行してもよい
+- 型を調べるのは `Core:type(v)`。返り値は `"str"`, `"num"`, `"bool"`, `"null"`, `"arr"`, `"obj"`, `"fn"`, `"error"` のいずれか
+
+## Ui:C:* の部品
+
+- 部品は `Ui:render([...])` か、表示中の container・folder の `children` に入れたときだけ表示される。作っただけでは表示されない
+- 表示を変えるときは、部品を作り直すより `部品.update({ ... })` を使う。渡したプロパティだけが変わり、ほかは元の値のまま残る
+- **省略できるプロパティに `null` を渡すとエラーになる**。たとえば `color: null` は `Expect string, but got null.` になる。値を消したいときはキー自体を書かないか、`"inherit"` のような有効な値を渡す
+- `hidden` が効くのは `Ui:C:container` だけ。ほかの部品を隠したいときは container で包む
+- `Ui:C:*` の第2引数に id を渡すと、`Ui:get(id)` で取り出せる。省略すると自動で id が付く
+- `Ui:render` は画面全体を差し替える。部分的に変えたいなら、その部分を container にして `children` を `update` する
+- `textInput` と `textarea` の `onInput` は1文字入力するたびに呼ばれる。確定時だけ処理したいならボタンを別に置く
+- `numberInput` の `onInput` は数値（num）を受け取る。`select` の `onChange` は選ばれた要素の `value`（省略時は `text`）を受け取る
+- `select` の `default` には `items` の `value` を書く
+- `buttons` の各要素では `text` と `onClick` が必須
+- `postFormButton` と `postForm` の `form.text` は必須
+- MFM の中で押せる箇所を作るには `$[clickable.ev=名前 文字]` と書き、`Ui:C:mfm` の `onClickEv: @(ev) { ... }` で受け取る
+- コールバック（`onClick` など）の中で起きたエラーは、スクリプト全体を止めずにエラーとして表示される
+
+## Mk:* の関数
+
+- `Mk:api` は失敗しても例外を投げず、error 型の値を返す。`if Core:type(res) == "error" { ... }` で判定し、`res.info` で中身を見る
+- 本番の Play では `Mk:api` はトークンなしで呼ばれるため、`i` や `notes/create` のようにログインが必要な API は失敗する。投稿させたいときは `Ui:C:postFormButton` を使う
+- `Mk:dialog`・`Mk:confirm`・`readline` は、ユーザーが閉じるまで次の行に進まない。`Mk:toast` は待たない
+- `readline` でキャンセルされると空文字列 `""` が返る
+- `Mk:save` / `Mk:load` は Play ごとに保存先が分かれる。保存できるのは JSON にできる値だけで、関数は保存できない
+- `<:` と `print` の出力は、本番の Play では画面のどこにも表示されない（スクラッチパッドでは表示される）。ユーザーに見せたい値は `Ui:C:text` などで表示する
+- 本番の Play では、実行時エラーはダイアログで表示される
+- 日替わりの結果のように「同じ条件なら同じ値」にしたい乱数は `Math:gen_rng(シード)` で作る。`Math:rnd()` は毎回違う値を返す
+
+## この playground と本番の違い
+
+- `Mk:api` は既定で同梱のモックサーバーに送る。モックは `settings.dummyUser` のユーザーとしてログインしている扱いなので、本番の Play と違い `i` や `notes/create` も成功する。対応エンドポイントは `src/mock/api.ts` の `handlers` にある
+- ⚙ 設定で実サーバーに切り替え、トークンを入れると、トークン付きで呼ぶ（スクラッチパッドと同じ動き）
+- `<:` の出力はコンソールに出る。本番の Play では出ない
+- `THIS_ID` は `"playground"`、`THIS_URL` はこのページの URL になる
+- MFM の表示は mfm-renderer を使っているので、Misskey 本体と見た目が少し違う。`$[unixtime]` などの未対応の関数は `$[名前 ...]` のまま表示する

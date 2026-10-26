@@ -1,0 +1,15 @@
+// コンソール出力だけ
+/// @ 1.2.1
+// <: で右下のコンソールに出力します
+@fizzbuzz(n) {
+	if n % 15 == 0 "FizzBuzz"
+	elif n % 3 == 0 "Fizz"
+	elif n % 5 == 0 "Buzz"
+	else Core:to_str(n)
+}
+
+for let i = 1, 20 {
+	<: fizzbuzz(i)
+}
+
+{ USER_NAME: USER_NAME, LOCALE: LOCALE }

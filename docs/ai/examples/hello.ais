@@ -1,0 +1,19 @@
+// はじめての UI
+/// @ 1.2.1
+// Ui:render に部品の配列を渡すと、右側のプレビューに表示されます
+// Cmd/Ctrl + Enter で実行できます
+
+<: "Hello, AiScript!"
+
+Ui:render([
+	Ui:C:text({ text: "Hello, AiScript!", size: 1.5, bold: true }),
+	Ui:C:mfm({ text: "$[tada 🎉] **MFM** も $[fg.color=f80 書けます]" }),
+	Ui:C:button({
+		text: "押してね",
+		primary: true,
+		rounded: true,
+		onClick: @() {
+			Mk:toast("押されました")
+		},
+	}),
+])

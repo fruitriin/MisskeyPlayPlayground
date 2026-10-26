@@ -1,0 +1,31 @@
+// container の装飾
+/// @ 1.2.1
+Ui:render([
+	Ui:C:container({
+		align: "center",
+		bgColor: "#86b300",
+		fgColor: "#fff",
+		padding: 16,
+		rounded: true,
+		children: [Ui:C:text({ text: "bgColor / fgColor / rounded", bold: true })],
+	}),
+	Ui:C:container({
+		borderWidth: 2,
+		borderColor: "#f80",
+		borderStyle: "dashed",
+		borderRadius: 12,
+		padding: 16,
+		font: "serif",
+		children: [Ui:C:text({ text: "border 系の指定と serif フォント" })],
+	}),
+	Ui:C:container({
+		font: "monospace",
+		align: "right",
+		padding: 8,
+		children: [Ui:C:text({ text: "monospace / 右寄せ" })],
+	}),
+	Ui:C:container({
+		hidden: true,
+		children: [Ui:C:text({ text: "hidden: true なので見えない" })],
+	}),
+])

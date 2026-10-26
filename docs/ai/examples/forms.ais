@@ -1,0 +1,46 @@
+// フォーム部品ひとそろい
+/// @ 1.2.1
+let state = {
+	name: "ななし",
+	age: 20,
+	bio: "",
+	notify: true,
+	color: "green",
+}
+
+let preview = Ui:C:mfm({ text: "" })
+
+@refresh() {
+	preview.update({ text: `**{state.name}** さん（{state.age}歳）{Str:lf}好きな色: {state.color} / 通知: {if state.notify "ON" else "OFF"}{Str:lf}> {state.bio}` })
+}
+
+Ui:render([
+	Ui:C:textInput({ label: "名前", default: state.name, caption: "textInput", onInput: @(v) { state.name = v; refresh() } }),
+	Ui:C:numberInput({ label: "年齢", default: 20, caption: "numberInput", onInput: @(v) { state.age = v; refresh() } }),
+	Ui:C:textarea({ label: "自己紹介", caption: "textarea", onInput: @(v) { state.bio = v; refresh() } }),
+	Ui:C:switch({ label: "通知を受け取る", caption: "switch", default: true, onChange: @(v) { state.notify = v; refresh() } }),
+	Ui:C:select({
+		label: "好きな色",
+		caption: "select",
+		default: "green",
+		items: [
+			{ text: "赤", value: "red" },
+			{ text: "緑", value: "green" },
+			{ text: "青", value: "blue" },
+		],
+		onChange: @(v) { state.color = v; refresh() },
+	}),
+	Ui:C:folder({
+		title: "プレビュー（folder）",
+		opened: true,
+		children: [
+			Ui:C:container({
+				bgColor: "#8882",
+				padding: 12,
+				rounded: true,
+				children: [preview],
+			}),
+		],
+	}),
+])
+refresh()

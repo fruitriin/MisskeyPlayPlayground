@@ -1,0 +1,23 @@
+// カウンター（update）
+/// @ 1.2.1
+// 部品の update() で表示を書き換えます
+var count = 0
+let label = Ui:C:text({ text: `count: {count}`, size: 2 })
+
+@refresh() {
+	label.update({ text: `count: {count}`, color: if count < 0 "#e44" else "inherit" })
+}
+
+Ui:render([
+	Ui:C:container({
+		align: "center",
+		children: [
+			label,
+			Ui:C:buttons({ buttons: [
+				{ text: "-1", onClick: @() { count -= 1; refresh() } },
+				{ text: "リセット", onClick: @() { count = 0; refresh() } },
+				{ text: "+1", primary: true, onClick: @() { count += 1; refresh() } },
+			] }),
+		],
+	}),
+])

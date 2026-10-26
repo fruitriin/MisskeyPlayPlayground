@@ -1,0 +1,45 @@
+// タイムラインとリアクション（Mk:api）
+/// @ 1.2.1
+// モックサーバーのタイムラインを読み、リアクションと投稿をします
+let list = Ui:C:container({ children: [] })
+let input = Ui:C:textInput({ label: "ノートを書く", onInput: @(v) { draft = v } })
+var draft = ""
+
+@noteView(note) {
+	let reactions = Obj:kvs(note.reactions).map(@(kv) { `{kv[0]} {kv[1]}` }).join("  ")
+	Ui:C:container({
+		borderWidth: 1,
+		borderRadius: 8,
+		padding: 12,
+		children: [
+			Ui:C:mfm({ text: `**{note.user.name}** @{note.user.username}`, size: 0.9 }),
+			Ui:C:mfm({ text: note.text }),
+			Ui:C:mfm({ text: reactions, size: 0.85 }),
+			Ui:C:buttons({ buttons: [
+				{ text: "👍", disabled: note.myReaction != null, onClick: @() {
+					Mk:api("notes/reactions/create", { noteId: note.id, reaction: "👍" })
+					reload()
+				} },
+			] }),
+		],
+	})
+}
+
+@reload() {
+	let notes = Mk:api("notes/timeline", { limit: 5 })
+	if Core:type(notes) == "error" {
+		list.update({ children: [Ui:C:text({ text: Json:stringify(notes.info) })] })
+		return null
+	}
+	list.update({ children: notes.map(noteView) })
+}
+
+Ui:render([
+	input,
+	Ui:C:button({ text: "ノート", primary: true, onClick: @() {
+		let res = Mk:api("notes/create", { text: draft })
+		if Core:type(res) == "error" Mk:toast(res.info.message) else reload()
+	} }),
+	list,
+])
+reload()

@@ -1,0 +1,481 @@
+{
+	"$comment": "Misskey Play で使える Ui: / Mk: 関数と定数の定義。補完と docs/ai/play-api.md の生成元。Misskey の packages/frontend/src/aiscript/{ui,api}.ts に合わせて書く",
+	"constants": [
+		{
+			"name": "USER_ID",
+			"type": "str | null",
+			"doc": "閲覧しているユーザーの ID。未ログインなら null。"
+		},
+		{
+			"name": "USER_NAME",
+			"type": "str | null",
+			"doc": "閲覧しているユーザーの表示名。未ログインまたは表示名なしなら null。"
+		},
+		{
+			"name": "USER_USERNAME",
+			"type": "str | null",
+			"doc": "閲覧しているユーザーのユーザー名（@ なし）。未ログインなら null。"
+		},
+		{
+			"name": "CUSTOM_EMOJIS",
+			"type": "arr<obj>",
+			"doc": "サーバーのカスタム絵文字の一覧。各要素は name, aliases, category, url などを持つ。"
+		},
+		{
+			"name": "LOCALE",
+			"type": "str",
+			"doc": "UI の言語。例: \"ja-JP\""
+		},
+		{
+			"name": "SERVER_URL",
+			"type": "str",
+			"doc": "サーバーの URL。例: \"https://misskey.example\""
+		},
+		{
+			"name": "THIS_ID",
+			"type": "str",
+			"doc": "この Play の ID（Play でのみ定義される）。"
+		},
+		{
+			"name": "THIS_URL",
+			"type": "str",
+			"doc": "この Play のページの URL（Play でのみ定義される）。"
+		}
+	],
+	"functions": [
+		{
+			"name": "Mk:dialog",
+			"signature": "Mk:dialog(title: str | null, text: str | null, type?: str): null",
+			"doc": "ダイアログを表示し、閉じられるまで待つ。type は \"info\"（既定）, \"success\", \"warning\", \"error\", \"question\", \"waiting\" のいずれか。"
+		},
+		{
+			"name": "Mk:confirm",
+			"signature": "Mk:confirm(title: str | null, text: str | null, type?: str): bool",
+			"doc": "OK / キャンセルの確認ダイアログを表示し、OK なら true を返す。type の既定値は \"question\"。"
+		},
+		{
+			"name": "Mk:toast",
+			"signature": "Mk:toast(text: str): null",
+			"doc": "画面上部に短いメッセージ（トースト）を表示する。待たずに次へ進む。"
+		},
+		{
+			"name": "Mk:api",
+			"signature": "Mk:api(endpoint: str, params: obj, token?: str | null): value",
+			"doc": "Misskey API を呼ぶ。endpoint は \"notes/create\" のように /api/ 以降を書く。成功時はレスポンスを、失敗時は error 型の値（name は \"request_failed\"、info にエラー内容）を返す。例外は投げないので Core:type(res) == \"error\" で判定する。token を省略すると Play では未認証で呼ぶ（スクラッチパッドやウィジェットでは閲覧者の権限）。"
+		},
+		{
+			"name": "Mk:save",
+			"signature": "Mk:save(key: str, value: value): null",
+			"doc": "値をブラウザに保存する。Play ごとに保存先が分かれる。関数など JSON にできない値は保存できない。"
+		},
+		{
+			"name": "Mk:load",
+			"signature": "Mk:load(key: str): value",
+			"doc": "Mk:save で保存した値を読む。保存されていなければ null を返す。"
+		},
+		{
+			"name": "Mk:remove",
+			"signature": "Mk:remove(key: str): null",
+			"doc": "Mk:save で保存した値を消す。"
+		},
+		{
+			"name": "Mk:url",
+			"signature": "Mk:url(): str",
+			"doc": "いま開いているページの URL を返す。"
+		},
+		{
+			"name": "Mk:nyaize",
+			"signature": "Mk:nyaize(text: str): str",
+			"doc": "文字列を猫語にする（な→にゃ など）。"
+		},
+		{
+			"name": "Ui:render",
+			"signature": "Ui:render(children: arr<component>): null",
+			"doc": "画面に表示する部品を差し替える。Ui:root.update({ children: [...] }) と同じ。何度呼んでもよい。"
+		},
+		{
+			"name": "Ui:get",
+			"signature": "Ui:get(id: str): component | null",
+			"doc": "Ui:C:* の第2引数で付けた id から部品を取り出す。なければ null を返す。"
+		},
+		{
+			"name": "Ui:root",
+			"signature": "Ui:root: component",
+			"kind": "const",
+			"doc": "画面のいちばん外側の部品。Ui:root.update({ children: [...] }) で中身を差し替えられる。"
+		}
+	],
+	"componentCommon": {
+		"doc": "Ui:C:<種類>(props: obj, id?: str) で部品を作る。返り値は { id: str, update: @(props: obj) } を持つオブジェクト。update には変えたいプロパティだけを渡せばよく、渡さなかったものは元の値のまま残る。部品は Ui:render や container の children に入れたときにだけ表示される。 hidden で隠せるのは container だけで、ほかの部品に hidden を渡しても無視される。"
+	},
+	"components": [
+		{
+			"name": "container",
+			"doc": "子部品を縦に並べる箱。背景色や枠線で装飾できる。",
+			"props": [
+				{
+					"name": "children",
+					"type": "arr<component>",
+					"doc": "中に並べる部品。"
+				},
+				{
+					"name": "align",
+					"type": "\"left\" | \"center\" | \"right\"",
+					"doc": "文字や部品の寄せ方。"
+				},
+				{
+					"name": "bgColor",
+					"type": "str",
+					"doc": "背景色（CSS の色）。"
+				},
+				{
+					"name": "fgColor",
+					"type": "str",
+					"doc": "文字色（CSS の色）。"
+				},
+				{
+					"name": "font",
+					"type": "\"serif\" | \"sans-serif\" | \"monospace\"",
+					"doc": "フォント。"
+				},
+				{
+					"name": "borderWidth",
+					"type": "num",
+					"doc": "枠線の太さ（px）。枠線系をどれか指定すると、太さ 1px・実線が既定になる。"
+				},
+				{
+					"name": "borderColor",
+					"type": "str",
+					"doc": "枠線の色。"
+				},
+				{
+					"name": "borderStyle",
+					"type": "\"hidden\" | \"dotted\" | \"dashed\" | \"solid\" | \"double\" | \"groove\" | \"ridge\" | \"inset\" | \"outset\"",
+					"doc": "枠線の種類。"
+				},
+				{
+					"name": "borderRadius",
+					"type": "num",
+					"doc": "角の丸み（px）。rounded より優先される。"
+				},
+				{
+					"name": "padding",
+					"type": "num",
+					"doc": "内側の余白（px）。"
+				},
+				{
+					"name": "rounded",
+					"type": "bool",
+					"doc": "true で角を 8px 丸める。"
+				},
+				{
+					"name": "hidden",
+					"type": "bool",
+					"doc": "true にすると表示しない。"
+				}
+			]
+		},
+		{
+			"name": "text",
+			"doc": "プレーンテキストを表示する。",
+			"props": [
+				{
+					"name": "text",
+					"type": "str",
+					"doc": "表示する文字列。"
+				},
+				{
+					"name": "size",
+					"type": "num",
+					"doc": "文字の大きさの倍率（1 = 100%）。"
+				},
+				{
+					"name": "bold",
+					"type": "bool",
+					"doc": "太字にする。"
+				},
+				{
+					"name": "color",
+					"type": "str",
+					"doc": "文字色（CSS の色）。"
+				},
+				{
+					"name": "font",
+					"type": "\"serif\" | \"sans-serif\" | \"monospace\"",
+					"doc": "フォント。"
+				}
+			]
+		},
+		{
+			"name": "mfm",
+			"doc": "MFM（Misskey Flavored Markdown）を表示する。$[clickable.ev=名前 文字] で押せる箇所を作れる。",
+			"props": [
+				{
+					"name": "text",
+					"type": "str",
+					"doc": "MFM の文字列。"
+				},
+				{
+					"name": "size",
+					"type": "num",
+					"doc": "文字の大きさの倍率。"
+				},
+				{
+					"name": "bold",
+					"type": "bool",
+					"doc": "太字にする。"
+				},
+				{
+					"name": "color",
+					"type": "str",
+					"doc": "文字色（CSS の色）。"
+				},
+				{
+					"name": "font",
+					"type": "\"serif\" | \"sans-serif\" | \"monospace\"",
+					"doc": "フォント。"
+				},
+				{
+					"name": "onClickEv",
+					"type": "@(ev: str)",
+					"doc": "$[clickable.ev=名前 ...] が押されたときに、ev の名前を受け取って呼ばれる。"
+				}
+			]
+		},
+		{
+			"name": "button",
+			"doc": "ボタン。",
+			"props": [
+				{
+					"name": "text",
+					"type": "str",
+					"doc": "ボタンの文字。"
+				},
+				{
+					"name": "onClick",
+					"type": "@()",
+					"doc": "押されたときに呼ばれる。"
+				},
+				{
+					"name": "primary",
+					"type": "bool",
+					"doc": "強調色で表示する。"
+				},
+				{
+					"name": "rounded",
+					"type": "bool",
+					"doc": "角を丸くする。"
+				},
+				{
+					"name": "disabled",
+					"type": "bool",
+					"doc": "押せなくする。"
+				}
+			]
+		},
+		{
+			"name": "buttons",
+			"doc": "ボタンを横に並べる。",
+			"props": [
+				{
+					"name": "buttons",
+					"type": "arr<{ text: str, onClick: @(), primary?: bool, rounded?: bool, disabled?: bool }>",
+					"doc": "並べるボタンの定義。各要素の text と onClick は必須。"
+				}
+			]
+		},
+		{
+			"name": "switch",
+			"doc": "オン・オフのスイッチ。",
+			"props": [
+				{
+					"name": "onChange",
+					"type": "@(v: bool)",
+					"doc": "切り替えられたときに新しい値で呼ばれる。"
+				},
+				{
+					"name": "default",
+					"type": "bool",
+					"doc": "最初の状態。"
+				},
+				{
+					"name": "label",
+					"type": "str",
+					"doc": "ラベル。"
+				},
+				{
+					"name": "caption",
+					"type": "str",
+					"doc": "補足説明。"
+				}
+			]
+		},
+		{
+			"name": "textInput",
+			"doc": "1行の文字入力欄。",
+			"props": [
+				{
+					"name": "onInput",
+					"type": "@(v: str)",
+					"doc": "入力のたびに、入力欄の文字列で呼ばれる。"
+				},
+				{
+					"name": "default",
+					"type": "str",
+					"doc": "最初の値。"
+				},
+				{
+					"name": "label",
+					"type": "str",
+					"doc": "ラベル。"
+				},
+				{
+					"name": "caption",
+					"type": "str",
+					"doc": "補足説明。"
+				}
+			]
+		},
+		{
+			"name": "textarea",
+			"doc": "複数行の文字入力欄。",
+			"props": [
+				{
+					"name": "onInput",
+					"type": "@(v: str)",
+					"doc": "入力のたびに、入力欄の文字列で呼ばれる。"
+				},
+				{
+					"name": "default",
+					"type": "str",
+					"doc": "最初の値。"
+				},
+				{
+					"name": "label",
+					"type": "str",
+					"doc": "ラベル。"
+				},
+				{
+					"name": "caption",
+					"type": "str",
+					"doc": "補足説明。"
+				}
+			]
+		},
+		{
+			"name": "numberInput",
+			"doc": "数値の入力欄。",
+			"props": [
+				{
+					"name": "onInput",
+					"type": "@(v: num)",
+					"doc": "入力のたびに、数値で呼ばれる。"
+				},
+				{
+					"name": "default",
+					"type": "num",
+					"doc": "最初の値。"
+				},
+				{
+					"name": "label",
+					"type": "str",
+					"doc": "ラベル。"
+				},
+				{
+					"name": "caption",
+					"type": "str",
+					"doc": "補足説明。"
+				}
+			]
+		},
+		{
+			"name": "select",
+			"doc": "選択肢から1つを選ぶ欄。",
+			"props": [
+				{
+					"name": "items",
+					"type": "arr<{ text: str, value?: str }>",
+					"doc": "選択肢。value を省くと text が値になる。"
+				},
+				{
+					"name": "onChange",
+					"type": "@(v: str)",
+					"doc": "選ばれたときに value で呼ばれる。"
+				},
+				{
+					"name": "default",
+					"type": "str",
+					"doc": "最初に選ばれている value。"
+				},
+				{
+					"name": "label",
+					"type": "str",
+					"doc": "ラベル。"
+				},
+				{
+					"name": "caption",
+					"type": "str",
+					"doc": "補足説明。"
+				}
+			]
+		},
+		{
+			"name": "folder",
+			"doc": "開閉できる見出し付きの枠。",
+			"props": [
+				{
+					"name": "children",
+					"type": "arr<component>",
+					"doc": "中に並べる部品。"
+				},
+				{
+					"name": "title",
+					"type": "str",
+					"doc": "見出し。"
+				},
+				{
+					"name": "opened",
+					"type": "bool",
+					"doc": "最初に開いておくか。既定は true。"
+				}
+			]
+		},
+		{
+			"name": "postFormButton",
+			"doc": "押すと投稿フォームを開くボタン。",
+			"props": [
+				{
+					"name": "text",
+					"type": "str",
+					"doc": "ボタンの文字。"
+				},
+				{
+					"name": "primary",
+					"type": "bool",
+					"doc": "強調色で表示する。"
+				},
+				{
+					"name": "rounded",
+					"type": "bool",
+					"doc": "角を丸くする。"
+				},
+				{
+					"name": "form",
+					"type": "{ text: str, cw?: str, visibility?: str, localOnly?: bool }",
+					"doc": "フォームの初期値。text は必須。visibility は \"public\", \"home\", \"followers\", \"specified\" のいずれか。"
+				}
+			]
+		},
+		{
+			"name": "postForm",
+			"doc": "画面に埋め込む投稿フォーム。",
+			"props": [
+				{
+					"name": "form",
+					"type": "{ text: str, cw?: str, visibility?: str, localOnly?: bool }",
+					"doc": "フォームの初期値。text は必須。"
+				}
+			]
+		}
+	]
+}

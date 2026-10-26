@@ -1,0 +1,36 @@
+// おみくじ（Play の定番）
+/// @ 1.2.1
+// ユーザーごとに日替わりのおみくじ
+let choices = [
+	"ｷﾞｶﾞ吉",
+	"大吉",
+	"吉",
+	"中吉",
+	"小吉",
+	"末吉",
+	"凶",
+	"大凶",
+]
+
+// シードが「PlayID+ユーザーID+今日の日付」である乱数生成器を用意
+let random = Math:gen_rng(`{THIS_ID}{USER_ID}{Date:year()}{Date:month()}{Date:day()}`)
+
+let chosen = choices[random(0, (choices.len - 1))]
+let result = `今日のあなたの運勢は **{chosen}** です。`
+
+Ui:render([
+	Ui:C:container({
+		align: "center",
+		children: [
+			Ui:C:mfm({ text: result }),
+			Ui:C:postFormButton({
+				text: "投稿する",
+				rounded: true,
+				primary: true,
+				form: {
+					text: `{result}{Str:lf}{THIS_URL}`,
+				},
+			}),
+		],
+	}),
+])

@@ -52,6 +52,14 @@ function compareVersions(a: string, b: string): number {
 	return 0;
 }
 
+function yieldToBrowser(): Promise<void> {
+	return new Promise(resolve => {
+		const channel = new MessageChannel();
+		channel.port1.onmessage = () => resolve();
+		channel.port2.postMessage(null);
+	});
+}
+
 let emojiCache: { server: string; emojis: unknown[] } | null = null;
 
 // MFM の表示に使う、絵文字名から絵文字情報への対応表
@@ -134,6 +142,10 @@ export async function run(code: string) {
 		THIS_ID: values.STR('playground'),
 		THIS_URL: values.STR(pageUrl),
 	}, {
+		// 処理系は一定のステップごとに少し休んで画面に処理を譲る。既定の setTimeout だと、
+		// タブが裏にあるときにブラウザが大きく遅らせ、ライブ共有中の実行が止まって見える。
+		// MessageChannel なら遅らされないので、こちらで休む（挙動は同じで、待ち時間だけが違う）
+		irqSleep: yieldToBrowser,
 		in: aiScriptReadline,
 		out: (value) => {
 			pushLog('print', value.type === 'str' ? value.value : utils.valToString(value));

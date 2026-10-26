@@ -147,14 +147,18 @@ export async function run(code: string) {
 		// MessageChannel なら遅らされないので、こちらで休む（挙動は同じで、待ち時間だけが違う）
 		irqSleep: yieldToBrowser,
 		in: aiScriptReadline,
+		// 止めた（別のコードの実行に切り替えた）処理系からの出力やエラーは、いまの実行のログに混ぜない
 		out: (value) => {
+			if (interpreter.value !== aiscript) return;
 			pushLog('print', value.type === 'str' ? value.value : utils.valToString(value));
 		},
 		err: (err) => {
+			if (interpreter.value !== aiscript) return;
 			pushLog('error', String(err));
 			running.value = false;
 		},
 		log: (type, params) => {
+			if (interpreter.value !== aiscript) return;
 			if (type === 'end' && params.val) {
 				pushLog('end', utils.valToString(params.val as never, true));
 			}

@@ -30,6 +30,8 @@ let applyingRemote = false;
 let remoteRunInFlight = false;
 // 実行が落ち着いたコードの rev。結果を報告するときに付ける
 let settledRev = 0;
+// 部屋から最初の状態を受け取った回数
+let snapshotCount = 0;
 
 export function generateKey(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(15));
@@ -82,6 +84,7 @@ async function applyRemote(newCode: string, rev: number, run: boolean) {
 async function handleMessage(msg: Record<string, unknown>) {
 	switch (msg.type) {
 		case 'snapshot': {
+			snapshotCount++;
 			live.viewers = msg.viewers as number;
 			live.rev = msg.rev as number;
 			settledRev = live.rev;
@@ -89,8 +92,9 @@ async function handleMessage(msg: Record<string, unknown>) {
 				// 部屋にコードがあれば、それを開いて実行する
 				await applyRemote(msg.code, msg.rev as number, true);
 			} else {
-				// 空の部屋なら、いまのコードを部屋に入れる
+				// 空の部屋なら、いまのコードを部屋に入れて実行する
 				send({ type: 'code', code: code.value });
+				if (!running.value) playgroundApi.run(code.value);
 			}
 			break;
 		}
@@ -181,7 +185,15 @@ watch(code, v => {
 // 実行結果や表示が変わったら、部屋に報告する
 watch([() => logs.value.length, components, running, pendingCallbacks, () => os.state.dialogs.length, () => os.state.toastHistory.length], scheduleStateReport, { deep: true });
 
-export function joinFromHash() {
+// URL が #live=合言葉 ならつなぎ、つないだかどうかを返す
+export function joinFromHash(): boolean {
 	const m = window.location.hash.match(/^#live=([A-Za-z0-9_-]{8,64})$/);
-	if (m) connect(decodeURIComponent(m[1]));
+	if (!m) return false;
+	connect(decodeURIComponent(m[1]));
+	// つながらないまま何も表示されないのを避けるため、部屋から何も届かなければ手元のコードを実行する
+	const startedAt = snapshotCount;
+	setTimeout(() => {
+		if (snapshotCount === startedAt && !running.value) playgroundApi.run(code.value);
+	}, 3000);
+	return true;
 }

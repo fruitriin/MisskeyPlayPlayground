@@ -168,9 +168,8 @@ onMounted(async () => {
 			os.toast('リンクからコードを読み込めませんでした');
 		}
 	}
-	run(code.value);
-	// #live=合言葉 で開いたら、その部屋につなぐ
-	joinFromHash();
+	// #live=合言葉 で開いたら、その部屋につなぐ。部屋のコードを実行するので、ここでは実行しない（2 回続けて実行すると、途中で止めた実行のエラーが出ることがある）
+	if (!joinFromHash()) run(code.value);
 });
 </script>
 

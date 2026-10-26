@@ -5,8 +5,3 @@ declare module '*.vue' {
 	export default component;
 }
 
-declare module 'mfm-renderer' {
-	import type { Plugin } from 'vue';
-	const plugin: Plugin;
-	export default plugin;
-}

@@ -38,7 +38,7 @@ npm run dev
 
 ## MFM の表示
 
-MFM の表示には [mfm-renderer](https://github.com/fruitriin/mfm-renderer) を使っています。いまは `file:../mfm-renderer` を参照しているので、隣のディレクトリに clickable 対応版（`feat/clickable` ブランチ）が必要です。
+MFM の表示には [mfm-renderer](https://github.com/fruitriin/mfm-renderer) の v0.2.0 を、GitHub から直接インストールして使っています（インストール時に mfm-renderer 側でビルドされます）。
 
 ## ライセンス
 

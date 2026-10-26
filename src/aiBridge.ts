@@ -3,7 +3,7 @@
 import { nextTick } from 'vue';
 import { code } from './store.js';
 import { run, stop, logs, root, components, running, usedVersion, pendingCallbacks, trackCallback } from './runner.js';
-import { samples } from './samples.js';
+import { allSamples as samples } from './allSamples.js';
 import { settings } from './settings.js';
 import * as os from './os.js';
 import type { AsUiComponent } from './aiscript/ui.js';

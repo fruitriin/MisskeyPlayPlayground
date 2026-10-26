@@ -1,0 +1,18 @@
+/// @ 1.2.1
+// 数当てゲーム: 状態（答えと回数）→ 操作（ボタン）→ 表示の更新、の基本の形
+let answer = Math:rnd(1, 100)
+var tries = 0
+var guess = 50
+let message = Ui:C:text({ text: "1〜100 の数を当ててください" })
+
+Ui:render([
+	message,
+	Ui:C:numberInput({ label: "あなたの予想", default: 50, onInput: @(v) { guess = v } }),
+	Ui:C:button({ text: "決定", primary: true, onClick: @() {
+		tries += 1
+		let text = if guess == answer `正解！ {tries} 回で当たりました`
+			elif guess < answer `{guess} より大きいです`
+			else `{guess} より小さいです`
+		message.update({ text: text })
+	} }),
+])

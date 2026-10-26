@@ -15,3 +15,13 @@
 - [Mk:api でサーバー情報](api.ais)
 - [タイムラインとリアクション（Mk:api）](timeline.ais)
 - [コンソール出力だけ](console.ais)
+
+## ミニゲーム
+
+- [倉庫番: 荷物（📦）をすべてゴール（🟡）に押し込めばクリア](sokoban.ais)
+
+## ガイドの例（docs/guide/minigame.md で使っているもの）
+
+- [数当てゲーム: 状態（答えと回数）→ 操作（ボタン）→ 表示の更新、の基本の形](guide-guess.ais)
+- [盤面を絵文字で描き、マスのタップで操作する。タップしたマスと上下左右の色が反転する](guide-lights.ais)
+- [時間で動かす: Async:interval は止めるための関数を返す](guide-timer.ais)

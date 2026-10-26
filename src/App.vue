@@ -7,9 +7,12 @@
 		</div>
 		<select :class="$style.sampleSelect" :value="''" aria-label="サンプルを開く" @change="loadSample(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''">
 			<option value="" disabled>サンプルを開く…</option>
-			<option v-for="s in samples" :key="s.id" :value="s.id">{{ s.title }}</option>
+			<optgroup v-for="g in sampleGroups" :key="g.label" :label="g.label">
+				<option v-for="s in g.items" :key="s.id" :value="s.id">{{ s.title }}</option>
+			</optgroup>
 		</select>
 		<div :class="$style.spacer"/>
+		<XButton small inline :class="$style.headerButton" title="ミニゲームの作り方" @click="showGuide = true">📖 ガイド</XButton>
 		<XButton small inline :class="$style.headerButton" title="共有用のリンクをコピー" @click="share">共有</XButton>
 		<XButton small inline :class="$style.headerButton" title="実行環境の設定" @click="showSettings = true">⚙ 設定</XButton>
 		<XButton v-if="running" small inline :class="$style.headerButton" @click="stop">■ 停止</XButton>
@@ -64,6 +67,7 @@
 	</main>
 
 	<SettingsPanel v-if="showSettings" @close="showSettings = false"/>
+	<GuidePanel v-if="showGuide" @close="closeGuide" @run="openFromGuide" @sample="id => { closeGuide(); loadSample(id); }"/>
 	<Dialogs/>
 </div>
 </template>
@@ -75,8 +79,9 @@ import AsUi from './components/AsUi.vue';
 import UiTree from './components/UiTree.vue';
 import Dialogs from './components/Dialogs.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
+import GuidePanel from './components/GuidePanel.vue';
 import XButton from './components/ui/XButton.vue';
-import { samples } from './samples.js';
+import { allSamples, sampleGroups } from './allSamples.js';
 import { encodeCode, decodeCode } from './share.js';
 import { settings } from './settings.js';
 import { run, stop, clearLogs, logs, root, components, runKey, running, usedVersion } from './runner.js';
@@ -84,6 +89,7 @@ import * as os from './os.js';
 import { code } from './store.js';
 
 const showSettings = ref(false);
+const showGuide = ref(window.location.hash === '#guide');
 const bottomTab = ref<'console' | 'tree'>('console');
 const mobileTab = ref<'editor' | 'preview' | 'console'>('editor');
 const mobileTabs = [
@@ -112,15 +118,30 @@ function execute() {
 	run(code.value);
 }
 
-async function loadSample(id: string) {
-	const sample = samples.find(s => s.id === id);
-	if (!sample) return;
-	if (code.value.trim() !== '' && code.value !== sample.code && !samples.some(s => s.code === code.value)) {
-		const { canceled } = await os.confirm({ type: 'warning', title: 'サンプルを開く', text: 'いまのコードは上書きされます。よろしいですか？' });
+// いまのコードを捨ててよいか確かめてから、別のコードを開いて実行する
+async function openCode(newCode: string, title: string) {
+	const isUnchanged = code.value.trim() === '' || code.value === newCode || allSamples.some(s => s.code === code.value);
+	if (!isUnchanged) {
+		const { canceled } = await os.confirm({ type: 'warning', title, text: 'いまのコードは上書きされます。よろしいですか？' });
 		if (canceled) return;
 	}
-	code.value = sample.code;
-	run(code.value);
+	code.value = newCode;
+	execute();
+}
+
+function loadSample(id: string) {
+	const sample = allSamples.find(s => s.id === id);
+	if (sample) openCode(sample.code, 'サンプルを開く');
+}
+
+function closeGuide() {
+	showGuide.value = false;
+	if (window.location.hash === '#guide') history.replaceState(null, '', window.location.pathname);
+}
+
+function openFromGuide(newCode: string) {
+	closeGuide();
+	openCode(newCode, 'ガイドの例を開く');
 }
 
 async function share() {

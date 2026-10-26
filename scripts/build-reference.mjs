@@ -1,6 +1,6 @@
 // AiScript 公式ドキュメント（docs/ai/aiscript/）と src/reference/play.json から、
 // エディタの補完用データ（src/reference/std.json）と AI 向け資料（docs/ai/play-api.md）を作る
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { Interpreter } from '@syuilo/aiscript';
 
 const root = new URL('../', import.meta.url);
@@ -121,6 +121,14 @@ mkdirSync(new URL('docs/ai/examples/', root), { recursive: true });
 for (const sample of samples) {
 	writeFileSync(new URL(`docs/ai/examples/${sample.id}.ais`, root), `// ${sample.title}\n${sample.code}`);
 }
+// ミニゲーム（src/games）とガイドの例（docs/guide/examples）も書き出す
+const copyAis = (dir, prefix) => readdirSync(new URL(dir, root)).filter(f => f.endsWith('.ais')).map(f => {
+	const name = `${prefix}${f}`;
+	writeFileSync(new URL(`docs/ai/examples/${name}`, root), readFileSync(new URL(dir + f, root)));
+	return { name, title: readFileSync(new URL(dir + f, root), 'utf8').split('\n').find(l => l.startsWith('// '))?.slice(3) ?? f };
+});
+const games = copyAis('src/games/', '');
+const guideExamples = copyAis('docs/guide/examples/', 'guide-');
 writeFileSync(new URL('docs/ai/examples/README.md', root), [
 	'<!-- scripts/build-reference.mjs が src/samples.ts から生成する -->',
 	'# サンプル一覧',
@@ -129,8 +137,16 @@ writeFileSync(new URL('docs/ai/examples/README.md', root), [
 	'',
 	...samples.map(s => `- [${s.title}](${s.id}.ais)`),
 	'',
+	'## ミニゲーム',
+	'',
+	...games.map(g => `- [${g.title}](${g.name})`),
+	'',
+	'## ガイドの例（docs/guide/minigame.md で使っているもの）',
+	'',
+	...guideExamples.map(g => `- [${g.title}](${g.name})`),
+	'',
 ].join('\n'));
-console.log(`docs/ai/examples/ に ${samples.length} 件のサンプルを書き出しました`);
+console.log(`docs/ai/examples/ に サンプル ${samples.length} 件・ミニゲーム ${games.length} 件・ガイドの例 ${guideExamples.length} 件を書き出しました`);
 
 // 公開サイトでも読めるよう、docs/ai を public/ai にコピーする（public/ai は git 管理外）
 rmSync(new URL('public/ai/', root), { recursive: true, force: true });

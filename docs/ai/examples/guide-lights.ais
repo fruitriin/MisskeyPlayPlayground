@@ -1,0 +1,26 @@
+/// @ 1.2.1
+// 盤面を絵文字で描き、マスのタップで操作する。タップしたマスと上下左右の色が反転する
+let SIZE = 3
+var cells = Arr:create(SIZE).map(@(_row) { Arr:create(SIZE, false) })
+
+let board = Ui:C:mfm({ text: "", size: 2, onClickEv: @(ev) {
+	let [x, y] = ev.split("_").map(@(s) { s.to_num() })
+	each let [dx, dy], [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]] {
+		let nx = x + dx
+		let ny = y + dy
+		if nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE {
+			cells[ny][nx] = !cells[ny][nx]
+		}
+	}
+	render()
+} })
+
+@render() {
+	let lines = cells.map(@(row, y) {
+		row.map(@(on, x) { `$[clickable.ev={x}_{y} {if on "🟨" else "⬛"}]` }).join("")
+	})
+	board.update({ text: lines.join(Str:lf) })
+}
+
+Ui:render([board])
+render()

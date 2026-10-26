@@ -109,7 +109,7 @@ const mobileTabs = [
 ] as const;
 const consoleEl = ref<HTMLElement>();
 
-const logMarks = { print: '›', end: '←', error: '✕', info: 'i' } as const;
+const logMarks = { print: '›', end: '←', error: '✕', info: 'i', test: '🧪' } as const;
 const errorCount = computed(() => logs.value.filter(l => l.type === 'error').length);
 
 watch(() => logs.value.length, async () => {
@@ -249,6 +249,7 @@ onMounted(async () => {
 .log_error { color: #ec4137; background: rgba(236, 65, 55, 0.08); }
 .log_error .logMark { color: #ec4137; }
 .log_info .logText { color: var(--syntaxNamespace); }
+.log_test .logText { color: var(--syntaxString); }
 .mobileTabs { display: none; }
 /* スクリーンショット用: プレビューだけを、中身の高さのまま表示する */
 .screenshotMode { height: auto; }

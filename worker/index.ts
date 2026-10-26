@@ -3,6 +3,7 @@
 // WebSocket は 2 種類ある。viewer（playground の画面）と、observer（見るだけ。画面として数えず、act も届かない）
 // /api/* 以外のリクエストは静的ファイル（dist/）がそのまま返す（wrangler.jsonc の run_worker_first）
 import { DurableObject } from 'cloudflare:workers';
+import { lint } from '../src/lint/lint.ts';
 
 const KEY_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
 const MAX_CODE_BYTES = 256 * 1024;
@@ -35,8 +36,17 @@ export default {
 		if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 		if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
 
-		const m = url.pathname.match(/^\/api\/rooms\/([^/]+)(\/(?:ws|state|act))?\/?$/);
-		if (!m) return error(404, 'NOT_FOUND', 'API は /api/rooms/<合言葉> の下にあります。使い方は /ai/live-api.md を見てください');
+		// 静的チェック（部屋は要らない）。本文はコードそのもの
+		if (url.pathname === '/api/lint' || url.pathname === '/api/lint/') {
+			if (request.method !== 'POST') return error(405, 'METHOD_NOT_ALLOWED', 'POST /api/lint にコードを送ってください');
+			const code = await request.text();
+			if (new TextEncoder().encode(code).length > MAX_CODE_BYTES) return error(413, 'TOO_LARGE', 'コードは 256KB までです');
+			const diagnostics = lint(code);
+			return json({ ok: !diagnostics.some(d => d.severity === 'error'), diagnostics });
+		}
+
+		const m = url.pathname.match(/^\/api\/rooms\/([^/]+)(\/(?:ws|state|act|test))?\/?$/);
+		if (!m) return error(404, 'NOT_FOUND', 'API は /api/lint と /api/rooms/<合言葉> の下にあります。使い方は /ai/live-api.md と /ai/testing.md を見てください');
 		const key = decodeURIComponent(m[1]);
 		if (!KEY_PATTERN.test(key)) return error(400, 'INVALID_KEY', '合言葉は英数字と - _ の 8〜64 文字にしてください');
 		if (m[2] === '/ws' && request.headers.get('Upgrade') !== 'websocket') {
@@ -119,7 +129,7 @@ export class Room extends DurableObject<Env> {
 
 	async fetch(request: Request): Promise<Response> {
 		const url = new URL(request.url);
-		const action = url.pathname.match(/\/(ws|state|act)\/?$/)?.[1] ?? null;
+		const action = url.pathname.match(/\/(ws|state|act|test)\/?$/)?.[1] ?? null;
 		const viewers = this.ctx.getWebSockets(VIEWER).length;
 
 		if (action === 'ws') {
@@ -174,9 +184,11 @@ export class Room extends DurableObject<Env> {
 			return json({ rev, stateRev: stateRev ?? null, stateAt: stateAt ?? null, viewers, state: state ?? null });
 		}
 
-		if (action === 'act' && request.method === 'POST') {
-			const body = await request.json<{ actions?: unknown; timeout?: unknown }>().catch(() => null);
-			if (!body || body.actions == null) return error(400, 'INVALID_BODY', '{ "actions": [...] } の形で送ってください');
+		if ((action === 'act' || action === 'test') && request.method === 'POST') {
+			const body = await request.json<{ actions?: unknown; steps?: unknown; timeout?: unknown }>().catch(() => null);
+			if (action === 'act' && (!body || body.actions == null)) return error(400, 'INVALID_BODY', '{ "actions": [...] } の形で送ってください');
+			if (action === 'test' && (!body || !Array.isArray(body.steps))) return error(400, 'INVALID_BODY', '{ "code"?: "...", "steps": [...] } の形で送ってください');
+			if (!body) return error(400, 'INVALID_BODY', '本文を JSON で送ってください');
 			// 操作は 1 つの画面にだけ頼む（複数で同時に押すと結果がずれるため）。observer には頼まない
 			const target = this.ctx.getWebSockets(VIEWER)[0];
 			if (!target) return error(409, 'NO_VIEWER', 'この合言葉の画面を開いているブラウザがありません');
@@ -184,18 +196,22 @@ export class Room extends DurableObject<Env> {
 			const timeoutMs = Math.min(typeof body.timeout === 'number' ? body.timeout : 5000, MAX_WAIT_MS - 1000);
 			type ActResult = { ok: boolean; result?: unknown; error?: string };
 			const result = await new Promise<ActResult>(resolve => {
+				// シナリオテストは手順が多いので、長めに待つ
 				const timer = setTimeout(() => {
 					this.waitingAct.delete(id);
 					resolve({ ok: false, error: 'ブラウザから結果が返ってきませんでした' });
-				}, timeoutMs + 5000);
+				}, action === 'test' ? MAX_WAIT_MS : timeoutMs + 5000);
 				this.waitingAct.set(id, { resolve: v => resolve(v as ActResult), timer });
-				target.send(JSON.stringify({ type: 'act', id, actions: body.actions, timeout: timeoutMs }));
+				target.send(JSON.stringify(action === 'act'
+					? { type: 'act', id, actions: body!.actions, timeout: timeoutMs }
+					: { type: 'test', id, scenario: body }));
 			});
 			await this.touch();
+			if (action === 'test') return result.ok ? json(result.result) : error(422, 'TEST_FAILED_TO_RUN', result.error ?? 'テストを実行できませんでした');
 			return result.ok ? json({ state: result.result }) : error(422, 'ACT_FAILED', result.error ?? '操作に失敗しました');
 		}
 
-		return error(405, 'METHOD_NOT_ALLOWED', 'GET・PUT /api/rooms/<合言葉>、GET .../state、POST .../act が使えます');
+		return error(405, 'METHOD_NOT_ALLOWED', 'GET・PUT /api/rooms/<合言葉>、GET .../state、POST .../act、POST .../test が使えます');
 	}
 
 	async webSocketMessage(ws: WebSocket, raw: ArrayBuffer | string) {

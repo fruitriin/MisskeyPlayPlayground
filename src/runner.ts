@@ -6,12 +6,16 @@ import type { Ref } from 'vue';
 import { registerAsUiLib } from './aiscript/ui.js';
 import type { AsUiComponent, AsUiRoot } from './aiscript/ui.js';
 import { aiScriptReadline, createAiScriptEnv } from './aiscript/api.js';
+import { createTestLib } from './aiscript/test.js';
+import type { TestResult } from './aiscript/test.js';
+import { lint } from './lint/lint.js';
+import type { Diagnostic } from './lint/lint.js';
 import { effectiveServerUrl, callApi, apiCallListeners } from './settings.js';
 import * as os from './os.js';
 
 export type LogEntry = {
 	id: number;
-	type: 'print' | 'end' | 'error' | 'info';
+	type: 'print' | 'end' | 'error' | 'info' | 'test';
 	text: string;
 	time: Date;
 };
@@ -25,6 +29,9 @@ export const components = ref<Ref<AsUiComponent>[]>([]);
 export const runKey = ref(0);
 export const running = ref(false);
 export const usedVersion = ref<string>('');
+// Test:check などの結果と、実行したコードの静的チェックの結果
+export const testResults = ref<TestResult[]>([]);
+export const lintResults = ref<Diagnostic[]>([]);
 
 const interpreter = shallowRef<Interpreter | null>(null);
 
@@ -116,6 +123,8 @@ export async function run(code: string) {
 	components.value = [];
 	runKey.value++;
 	logs.value = [];
+	testResults.value = [];
+	lintResults.value = lint(code);
 	pendingCallbacks.value = 0;
 	os.state.toastHistory = [];
 
@@ -141,6 +150,11 @@ export async function run(code: string) {
 		}),
 		THIS_ID: values.STR('playground'),
 		THIS_URL: values.STR(pageUrl),
+		...createTestLib(result => {
+			if (interpreter.value !== aiscript) return;
+			testResults.value.push(result);
+			pushLog(result.ok ? 'test' : 'error', `${result.ok ? '✓' : '✕ テスト失敗:'} ${result.name}${result.messages.length ? `\n${result.messages.join('\n')}` : ''}`);
+		}),
 	}, {
 		// 処理系は一定のステップごとに少し休んで画面に処理を譲る。既定の setTimeout だと、
 		// タブが裏にあるときにブラウザが大きく遅らせ、ライブ共有中の実行が止まって見える。

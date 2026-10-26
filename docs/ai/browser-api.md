@@ -38,6 +38,8 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
 | `setScreenshotMode(on)` | `true` にすると、ヘッダー・エディタ・コンソールを隠し、プレビューだけを中身の高さのまま表示する。`false` で元に戻す |
 | `showPreview()` | プレビューを表示して先頭までスクロールする。スクリーンショットの前に呼ぶ（スマホ幅ではプレビューのタブに切り替わる） |
 | `act(action または action の配列, { timeout? })` | UI を順に操作し、最後の状態を返す |
+| `lint(code?)` | 実行せずに静的チェックする。`code` を省くとエディタのコード（[testing.md](testing.md)） |
+| `test(scenario)` | シナリオテスト。操作と期待する表示を流し、合否と要約を返す（[testing.md](testing.md)） |
 | `samples()` | サンプルの `{ id, title }` の一覧を返す |
 | `storage.keys()` / `storage.get(key)` / `storage.set(key, value)` / `storage.remove(key)` / `storage.clear()` | `Mk:save` で保存した値を読み書きする。値はそのまま（JSON に変換せずに）渡す。セーブを書き換えて、好きな場面からテストを始めるのに使う |
 | `loadSample(id)` | サンプルを読み込んで実行する |
@@ -75,6 +77,8 @@ s.logs;                      // [{ type: "end", text: "(null)" }]
   ui: UiNode | null,         // Ui:root から表示中の部品をたどった木
   dialogs: { kind: "alert" | "confirm" | "input" | "post", type?, title?, text? }[],
   toasts: { text: string, time: string }[],  // この実行で出たトーストの最新 10 件
+  tests: { passed, failed, results: [{ name, ok, messages }] },  // Test:check などの結果
+  lint: [{ line, column, severity, rule, message }],             // 実行したコードの静的チェック
   newLogs?: [...],           // act() のときだけ。その act() の間に出たログ
   newToasts?: [...],         // act() のときだけ。その act() の間に出たトースト
 }

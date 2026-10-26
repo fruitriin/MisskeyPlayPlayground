@@ -30,12 +30,14 @@ curl $ROOM/state
 
 | メソッドとパス | 説明 |
 | --- | --- |
+| `POST /api/lint` | 合言葉なしで使える。本文のコードを静的チェックし、`{ ok, diagnostics }` を返す（[testing.md](testing.md)） |
 | `GET /api/rooms/<合言葉>` | いまのコードを返す。`{ code, rev, updatedAt, updatedBy, viewers }`。`updatedBy` は `"api"`（外から）か `"browser"`（画面で編集） |
 | `PUT /api/rooms/<合言葉>` | コードを書き換える。本文はコードそのもの（`text/plain`）か、JSON の `{ "code": "...", "run": true }`。画面に反映して実行し、実行が落ち着くまで待って `{ rev, viewers, run, state }` を返す |
 | `GET /api/rooms/<合言葉>/state` | 画面が最後に報告した実行結果。`{ rev, stateRev, stateAt, viewers, state }`。`stateRev` は、その結果がどの版のコードのものか |
+| `POST /api/rooms/<合言葉>/test` | シナリオテストを画面で流し、`{ ok, passed, failed, results, summary }` を返す。本文は `{ "code"?: "...", "steps": [...] }`（[testing.md](testing.md)） |
 | `POST /api/rooms/<合言葉>/act` | 画面の UI を操作する。本文は `{ "actions": [...], "timeout": ミリ秒 }`。操作が終わったときの状態を `{ state }` で返す |
 
-- `state` の形は [browser-api.md](browser-api.md) の `PlaygroundState` と同じです（ログ・UI ツリー・ダイアログ・トースト）。`act` の結果には、その操作のあいだに出た `newLogs` と `newToasts` も入ります
+- `state` の形は [browser-api.md](browser-api.md) の `PlaygroundState` と同じです（ログ・UI ツリー・ダイアログ・トースト・テストの結果・静的チェックの結果）。`PUT` の結果の `state.lint` を見れば、送ったコードの静的チェックも分かります。`act` の結果には、その操作のあいだに出た `newLogs` と `newToasts` も入ります
 - `actions` の形も browser-api.md の `act` と同じです（`click`・`input`・`toggle`・`select`・`clickEv`・`dialog`・`wait`）
 - `PUT` は既定で最大 10 秒待ちます。`?wait=秒`（最大 60）で変えられ、`?wait=0` なら待たずにすぐ返ります（`state` は `null`）。時間内に終わらなければ `timedOut: true` が付きます
 - `run: false` を付けた JSON で `PUT` すると、画面のエディタを書き換えるだけで実行しません

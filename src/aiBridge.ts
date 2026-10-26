@@ -2,7 +2,10 @@
 // window.__playground に置く。使い方は docs/ai/browser-api.md と help() を参照
 import { nextTick } from 'vue';
 import { code, mobileTab, screenshotMode } from './store.js';
-import { run, stop, logs, root, components, running, usedVersion, pendingCallbacks, trackCallback } from './runner.js';
+import { run, stop, logs, root, components, running, usedVersion, pendingCallbacks, trackCallback, testResults, lintResults } from './runner.js';
+import { lint } from './lint/lint.js';
+import type { Diagnostic } from './lint/lint.js';
+import type { TestResult } from './aiscript/test.js';
 import { allSamples as samples } from './allSamples.js';
 import { settings } from './settings.js';
 import * as os from './os.js';
@@ -32,6 +35,10 @@ export type PlaygroundState = {
 	ui: UiNode | null;
 	dialogs: { kind: string; type?: string; title?: string; text?: string }[];
 	toasts: { text: string; time: string }[];
+	// Test:check などの結果
+	tests: { passed: number; failed: number; results: TestResult[] };
+	// 実行したコードの静的チェックの結果
+	lint: Diagnostic[];
 	// act() が返す状態だけに付く。その act() の間に出たログとトースト
 	newLogs?: { type: string; text: string }[];
 	newToasts?: { text: string; time: string }[];
@@ -55,6 +62,8 @@ const HELP = `window.__playground: Misskey Play Playground を JSON で操作す
 
 getState({ includeCode? })   いまの状態（ログ・UI ツリー・ダイアログ・トースト）を返す
 summary()                    状態を短い文章で返す（出力の長さに制限がある道具向け）
+lint(code?)                  実行せずに静的チェックする（構文、存在しない関数、文字列の +、null のプロパティなど）
+test(scenario)               シナリオテスト。{ code?, steps: [action または { expect: {...} }] } を流して合否を返す
 getCode() / setCode(code)    エディタのコードを読む・書く（setCode は実行しない）
 run(code?, { timeout? })     コードを実行し、落ち着いたら状態を返す（code を省くとエディタのコード）
 stop()                       実行を止める
@@ -149,6 +158,12 @@ export function getState(opts: Options = {}): PlaygroundState {
 			? { kind: d.kind, text: d.form.initialText }
 			: d.kind === 'input' ? { kind: d.kind, title: d.title } : { kind: d.kind, type: d.type, title: d.title, text: d.text }),
 		toasts: os.state.toastHistory.slice(-10).map(t => ({ text: t.text, time: t.time })),
+		tests: {
+			passed: testResults.value.filter(t => t.ok).length,
+			failed: testResults.value.filter(t => !t.ok).length,
+			results: testResults.value.map(t => ({ ...t, messages: [...t.messages] })),
+		},
+		lint: lintResults.value.map(d => ({ ...d })),
 	};
 }
 
@@ -252,12 +267,128 @@ function perform(action: Action): void {
 	}
 }
 
+// ===== シナリオテスト =====
+
+export type Expect = {
+	// 部品の確かめ（id で指定）
+	id?: string;
+	text?: string;          // 部品の文字（mfm の押せる箇所の書式は外す。buttons は各ボタンの文字をつないだもの）に含まれる
+	textMatch?: string;     // 正規表現
+	hidden?: boolean;
+	value?: unknown;        // 入力欄・switch・select の画面上の値
+	disabled?: boolean;     // button の disabled
+	// 全体の確かめ
+	noErrors?: boolean;     // ログにエラーがない
+	log?: string;           // <: の出力に含まれる
+	toast?: string;         // トーストに含まれる
+	dialog?: string;        // 開いているダイアログの種類・題名・本文に含まれる
+	noDialog?: boolean;
+	tests?: 'pass';         // Test:check などがすべて成功している
+	lint?: 'clean';         // 静的チェックで error がない
+};
+
+export type Step = Action | { expect: Expect; label?: string };
+
+export type Scenario = { code?: string; steps: Step[]; stopOnFail?: boolean; timeout?: number };
+
+export type ScenarioResult = {
+	ok: boolean;
+	passed: number;
+	failed: number;
+	results: { step: number; label: string; ok: boolean; message: string }[];
+	summary: string;
+};
+
+function plainText(n: UiNode): string {
+	if (Array.isArray(n.props.buttons)) return (n.props.buttons as { text: string }[]).map(b => b.text).join(' / ');
+	const t = n.props.text;
+	return typeof t === 'string' ? t.replace(/\$\[clickable\.ev=\S+ ([^\]]*)\]/g, '$1') : '';
+}
+
+function findNode(n: UiNode | null, id: string): UiNode | null {
+	if (!n) return null;
+	if (n.id === id) return n;
+	for (const c of n.children ?? []) {
+		const r = findNode(c, id);
+		if (r) return r;
+	}
+	return null;
+}
+
+function checkExpect(e: Expect, state: PlaygroundState): string | null {
+	const problems: string[] = [];
+	if (e.id != null) {
+		const node = findNode(state.ui, e.id);
+		if (!node) return `部品 "${e.id}" が画面にない`;
+		const text = plainText(node);
+		if (e.text != null && !text.includes(e.text)) problems.push(`"${e.id}" の文字に "${e.text}" がない（実際: "${text.slice(0, 80)}"）`);
+		if (e.textMatch != null && !new RegExp(e.textMatch).test(text)) problems.push(`"${e.id}" の文字が /${e.textMatch}/ に合わない（実際: "${text.slice(0, 80)}"）`);
+		if (e.hidden != null && node.hidden !== e.hidden) problems.push(`"${e.id}" の hidden が ${node.hidden}`);
+		if (e.value !== undefined && JSON.stringify(node.value) !== JSON.stringify(e.value)) problems.push(`"${e.id}" の値が ${JSON.stringify(node.value)}`);
+		if (e.disabled != null && (node.props.disabled === true) !== e.disabled) problems.push(`"${e.id}" の disabled が ${node.props.disabled === true}`);
+	}
+	if (e.noErrors) {
+		const errs = state.logs.filter(l => l.type === 'error');
+		if (errs.length) problems.push(`エラーが出ている: ${errs[0].text.split('\n')[0]}`);
+	}
+	if (e.log != null && !state.logs.some(l => l.type === 'print' && l.text.includes(e.log!))) problems.push(`出力に "${e.log}" がない`);
+	if (e.toast != null && !state.toasts.some(t => t.text.includes(e.toast!))) problems.push(`トーストに "${e.toast}" がない`);
+	if (e.dialog != null && !state.dialogs.some(d => [d.kind, d.title, d.text].some(x => x?.includes(e.dialog!)))) problems.push(`ダイアログ "${e.dialog}" が開いていない`);
+	if (e.noDialog && state.dialogs.length) problems.push(`ダイアログが開いている: ${state.dialogs[0].title ?? state.dialogs[0].kind}`);
+	if (e.tests === 'pass') {
+		if (state.tests.results.length === 0) problems.push('Test:check などが 1 つも実行されていない');
+		else if (state.tests.failed) problems.push(`テストが失敗している: ${state.tests.results.filter(t => !t.ok).map(t => `${t.name}（${t.messages.join(' / ')}）`).join(', ')}`);
+	}
+	if (e.lint === 'clean') {
+		const errs = state.lint.filter(d => d.severity === 'error');
+		if (errs.length) problems.push(`静的チェックのエラー: ${errs.map(d => `${d.line}:${d.column} ${d.message}`).join(' / ')}`);
+	}
+	return problems.length ? problems.join('。') : null;
+}
+
+function describeStep(step: Step): string {
+	if ('expect' in step) return step.label ?? `確かめる ${JSON.stringify(step.expect)}`;
+	return JSON.stringify(step);
+}
+
+async function runScenario(scenario: Scenario): Promise<ScenarioResult> {
+	const opts = { timeout: scenario.timeout };
+	const results: ScenarioResult['results'] = [];
+	let state = scenario.code != null ? await playgroundApi.run(scenario.code, opts) : getState({ includeCode: false });
+	for (let i = 0; i < scenario.steps.length; i++) {
+		const step = scenario.steps[i];
+		const label = describeStep(step);
+		let problem: string | null;
+		if ('expect' in step) {
+			problem = checkExpect(step.expect, state);
+		} else {
+			try {
+				state = await playgroundApi.act(step, opts);
+				problem = null;
+			} catch (err) {
+				problem = err instanceof Error ? err.message : String(err);
+			}
+		}
+		results.push({ step: i, label, ok: problem == null, message: problem ?? 'OK' });
+		if (problem != null && scenario.stopOnFail !== false) break;
+	}
+	const failed = results.filter(r => !r.ok);
+	const total = scenario.steps.length;
+	const summary = failed.length === 0 && results.length === total
+		? `OK: ${total} 手順すべて成功`
+		: `NG: ${results.length - failed.length} / ${total} 手順が成功。最初の失敗は手順 ${failed[0]?.step}（${failed[0]?.label.slice(0, 80)}）: ${failed[0]?.message}`;
+	return { ok: failed.length === 0 && results.length === total, passed: results.length - failed.length, failed: failed.length, results, summary };
+}
+
 // 出力の長さに制限のある道具向けに、状態を短い文章にまとめる
 function summarize(): string {
 	const state = getState({ includeCode: false });
 	const lines = [
 		`AiScript ${state.aiscriptVersion} / running=${state.running} / pendingCallbacks=${state.pendingCallbacks}`,
 	];
+	const lintErrors = state.lint.filter(d => d.severity !== 'info');
+	for (const d of lintErrors) lines.push(`LINT ${d.severity} ${d.line}:${d.column} [${d.rule}] ${d.message}`);
+	if (state.tests.results.length) lines.push(`tests: ${state.tests.passed} passed / ${state.tests.failed} failed${state.tests.failed ? ` (${state.tests.results.filter(t => !t.ok).map(t => t.name).join(', ')})` : ''}`);
 	const errors = state.logs.filter(l => l.type === 'error');
 	if (errors.length) lines.push(...errors.map(e => `ERROR: ${e.text.split('\n')[0]}`));
 	const prints = state.logs.filter(l => l.type === 'print');
@@ -284,6 +415,12 @@ function summarize(): string {
 export const playgroundApi = {
 	// 状態を短い文章で返す（エラー、出力、ダイアログ、UI ツリーを 1 行ずつ）
 	summary: summarize,
+	// コードを実行せずに静的チェックする。code を省くとエディタのコード
+	lint(source?: string): Diagnostic[] {
+		return lint(source ?? code.value);
+	},
+	// シナリオテスト: 操作と期待する表示を順に流し、合否を返す
+	test: runScenario,
 	version: 1,
 	help: () => HELP,
 	getState,

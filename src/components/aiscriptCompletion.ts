@@ -29,6 +29,17 @@ for (const c of playRef.components) {
 	});
 }
 
+// playground にだけあるもの（Misskey 本体にはない）。if exists PLAYGROUND { ... } の中で使う
+for (const [name, signature, doc] of [
+	['PLAYGROUND', 'PLAYGROUND: bool', 'playground で実行しているときだけある定数。Misskey 本体にはないので、if exists PLAYGROUND { ... } で playground のときだけテストを動かせる'],
+	['Test:check', 'Test:check(name: str, fn: @()): bool', 'テストを 1 つ実行する。fn の中の Test:eq などがすべて成功すれば成功。実行時エラーも失敗として記録する（playground 専用）'],
+	['Test:eq', 'Test:eq(actual, expected, label?: str): bool', '2 つの値が同じか確かめる。配列やオブジェクトは中身で比べる（playground 専用）'],
+	['Test:ne', 'Test:ne(actual, unexpected, label?: str): bool', '2 つの値が違うか確かめる（playground 専用）'],
+	['Test:ok', 'Test:ok(cond: bool, label?: str): bool', '条件が true か確かめる（playground 専用）'],
+] as const) {
+	globals.set(name, { name, signature, doc, type: name === 'PLAYGROUND' ? 'constant' : 'function' });
+}
+
 const componentProps = new Map(playRef.components.map(c => [c.name, c.props]));
 
 // 同じ名前の組み込みプロパティは受け手の型ごとにまとめる

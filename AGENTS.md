@@ -20,6 +20,7 @@ Misskey Play のコード（AiScript と、Play 固有の `Ui:` / `Mk:` / 定数
 - `src/aiscript/ui.ts`・`common.ts`・`src/components/AsUi.vue` は Misskey 本体からの移植。挙動は本体に合わせ、独自の拡張を入れない
 - 人向けのミニゲームのガイドは `docs/guide/minigame.md`（例は `docs/guide/examples/*.ais`）で、画面の「📖 ガイド」から開く
 - `public/llms.txt` のリンクは、AI がたどりやすいよう公開版の絶対 URL で書いている。公開先のドメインを変えたら書き換える。`public/_headers` で .md・.txt・.ais を UTF-8 として返している
+- 静的チェックは `src/lint/lint.ts`（ブラウザと Node.js の両方から使うので、ほかのソースを相対パスで import しない）。`npm run lint:ais -- ファイル.ais` で調べられる。テスト関数 `Test:*` と定数 `PLAYGROUND` は `src/aiscript/test.ts`、シナリオテストは `src/aiBridge.ts` の `runScenario`
 - ライブ共有の API は `worker/index.ts`（Worker と Room という Durable Object）、画面側は `src/live.ts` と `src/components/LivePanel.vue`。API ごと手元で試すときは `npm run preview:worker`（`wrangler dev`、http://localhost:8787）。Worker の型チェックは `npm run typecheck:worker`
 - `src/aiBridge.ts` が `window.__playground` の実装。`AsUi.vue` の `data-as-id` 属性と `trackCallback` に依存している
 - Mk:api のモックは `src/mock/api.ts`。エンドポイントを足すときは Misskey と同じ形のレスポンスにする

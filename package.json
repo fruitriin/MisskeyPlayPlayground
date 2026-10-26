@@ -11,7 +11,8 @@
     "prebuild": "npm run -s reference",
     "deploy": "npm run build && wrangler deploy",
     "preview:worker": "npm run build && wrangler dev --port 8787",
-    "typecheck:worker": "wrangler types worker/worker-configuration.d.ts && tsc -p worker/tsconfig.json"
+    "typecheck:worker": "wrangler types worker/worker-configuration.d.ts && tsc -p worker/tsconfig.json",
+    "lint:ais": "node scripts/lint-ais.mjs"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "@codemirror/autocomplete": "^6.20.4",
     "@codemirror/commands": "^6.11.1",
     "@codemirror/language": "^6.13.1",
+    "@codemirror/lint": "^6.9.7",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
     "@syuilo/aiscript": "^1.2.1",

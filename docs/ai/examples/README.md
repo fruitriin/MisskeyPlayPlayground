@@ -3,6 +3,7 @@
 
 どれも AiScript 1.2.1 と、この playground のモック API で動作を確認しています。
 
+- [ゲームのひな形（中身が上・部品とテストが下）](template.ais)
 - [はじめての UI](hello.ais)
 - [カウンター（update）](counter.ais)
 - [フォーム部品ひとそろい](forms.ais)

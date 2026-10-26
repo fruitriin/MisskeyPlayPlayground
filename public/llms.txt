@@ -8,6 +8,7 @@
 - [Tips](https://misskey-play-playground.riinsworkspace.workers.dev/ai/tips.md): AiScript 1.2.1 と Play で間違えやすい点
 - [Play API リファレンス](https://misskey-play-playground.riinsworkspace.workers.dev/ai/play-api.md): Ui:C:* 部品のプロパティ、Mk:* 関数、定数
 - [ミニゲームの作り方](https://misskey-play-playground.riinsworkspace.workers.dev/ai/minigame.md): Play でゲームを作るときの構成と検証のしかた
+- [テストと静的チェック](https://misskey-play-playground.riinsworkspace.workers.dev/ai/testing.md): 実行前に間違いを見つける lint（POST https://misskey-play-playground.riinsworkspace.workers.dev/api/lint にコードを送るだけでも使える）、AiScript の中に書くテスト関数 Test:*（playground 専用。if exists PLAYGROUND の中で使う）、操作と表示を確かめるシナリオテスト
 - [ライブ共有 API](https://misskey-play-playground.riinsworkspace.workers.dev/ai/live-api.md): ユーザーが画面で決めた合言葉を使い、HTTP（curl）でコードを送って実行し、結果を読み、UI を操作する。ブラウザを操作する仕組みがなくても使える。WebSocket（?role=observer）で、ユーザーの編集や実行結果をすぐ受け取ることもできる
 - [ブラウザ操作 API](https://misskey-play-playground.riinsworkspace.workers.dev/ai/browser-api.md): window.__playground でコードを実行し、UI を JSON で操作する
 - [AiScript 文法](https://misskey-play-playground.riinsworkspace.workers.dev/ai/aiscript/syntax.md)

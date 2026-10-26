@@ -12,6 +12,7 @@ import { bracketMatching, indentOnInput, syntaxHighlighting, HighlightStyle, ind
 import { tags as t } from '@lezer/highlight';
 import { aiscript } from './aiscriptLanguage.js';
 import { aiscriptAutocomplete, aiscriptHover } from './aiscriptCompletion.js';
+import { aiscriptLinter } from './aiscriptLint.js';
 
 const props = defineProps<{ modelValue: string }>();
 const emit = defineEmits<{
@@ -51,6 +52,11 @@ const theme = EditorView.theme({
 	'.as-hint': { padding: '6px 8px', maxWidth: '420px', maxHeight: '260px', overflowY: 'auto', fontFamily: 'inherit' },
 	'.as-hint-signature': { display: 'block', whiteSpace: 'pre-wrap', fontWeight: 'bold', marginBottom: '4px', fontSize: '12px' },
 	'.as-hint-doc': { whiteSpace: 'pre-wrap', fontSize: '12px', lineHeight: '1.5' },
+	'.cm-diagnostic': { padding: '6px 8px', fontSize: '12px', whiteSpace: 'pre-wrap' },
+	'.cm-diagnostic-error': { borderLeft: 'solid 4px #ec4137' },
+	'.cm-diagnostic-warning': { borderLeft: 'solid 4px #ecb637' },
+	'.cm-lintRange-error': { backgroundImage: 'none', textDecoration: 'underline wavy #ec4137', textDecorationSkipInk: 'none' },
+	'.cm-lintRange-warning': { backgroundImage: 'none', textDecoration: 'underline wavy #ecb637', textDecorationSkipInk: 'none' },
 	'.cm-matchingBracket': { backgroundColor: 'var(--editorSelection)', outline: 'none' },
 });
 
@@ -73,6 +79,7 @@ onMounted(() => {
 				aiscript,
 				aiscriptAutocomplete,
 				aiscriptHover,
+				aiscriptLinter,
 				syntaxHighlighting(highlight),
 				theme,
 				keymap.of([

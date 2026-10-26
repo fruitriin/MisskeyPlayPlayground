@@ -3,7 +3,7 @@
 import { nextTick, reactive, watch } from 'vue';
 import { code } from './store.js';
 import { getState, playgroundApi } from './aiBridge.js';
-import type { Action } from './aiBridge.js';
+import type { Action, Scenario } from './aiBridge.js';
 import { logs, components, running, pendingCallbacks } from './runner.js';
 import * as os from './os.js';
 
@@ -108,6 +108,16 @@ async function handleMessage(msg: Record<string, unknown>) {
 		case 'viewers':
 			live.viewers = msg.viewers as number;
 			break;
+		case 'test': {
+			try {
+				const result = await playgroundApi.test(msg.scenario as Scenario);
+				send({ type: 'actResult', id: msg.id, ok: true, result });
+			} catch (err) {
+				send({ type: 'actResult', id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });
+			}
+			scheduleStateReport();
+			break;
+		}
 		case 'act': {
 			try {
 				const state = await playgroundApi.act(msg.actions as Action | Action[], { timeout: msg.timeout as number });

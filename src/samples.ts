@@ -3,6 +3,121 @@ export type Sample = { id: string; title: string; code: string };
 
 export const samples: Sample[] = [
 	{
+		id: 'template',
+		title: 'ゲームのひな形（中身が上・部品とテストが下）',
+		code: `/// @ 1.2.1
+// ゲームのひな形「コイン集め」
+// 上にゲームの中身、下に部品（Lib）とテストを置く形の見本です。
+// 1〜3 を書き換えれば、別のゲームにできます。下の部品とテストは、必要になるまで読まなくて大丈夫です。
+
+// ===== 1. ゲームの中身（ここを書き換える）=====
+let SIZE = 5
+let COINS = 4
+let TILE = { floor: "⬜", coin: "🪙", player: "🐱" }
+
+// ===== 2. 状態とルール =====
+var player = { x: 0, y: 0 }
+var coins = []
+var moves = 0
+
+@reset() {
+	player = { x: 0, y: 0 }
+	coins = Lib:placeCoins(SIZE, COINS, @(min, max) { Math:rnd(min, max) })
+	moves = 0
+	render()
+}
+
+@move(dx, dy) {
+	if coins.len == 0 return null
+	player = Lib:moved(player, dx, dy, SIZE)
+	moves += 1
+	coins = coins.filter(@(c) { !(c.x == player.x && c.y == player.y) })
+	render()
+}
+
+// ===== 3. 画面 =====
+let board = Ui:C:mfm({ text: "", size: 2 }, "board")
+let status = Ui:C:text({ text: "" }, "status")
+
+@render() {
+	board.update({ text: Lib:grid(SIZE, @(x, y) {
+		if x == player.x && y == player.y TILE.player
+		elif Lib:has(coins, x, y) TILE.coin
+		else TILE.floor
+	}) })
+	status.update({ text: if coins.len == 0 \`🎉 全部集めた！ {moves} 手\` else \`残り {coins.len} 枚　{moves} 手\` })
+}
+
+Ui:render([
+	Ui:C:container({ align: "center", children: [
+		status,
+		board,
+		Lib:pad(move),
+		Ui:C:button({ text: "やり直す", onClick: @() { reset() } }, "reset"),
+	] }),
+])
+reset()
+
+// ===== ここから下は部品（触らなくてよい）=====
+// 名前空間 :: は実行の前に読み込まれるので、いちばん下に書いても上から Lib:名前 で使える。
+// 名前空間の中に var は置けないので、状態は上の 2. に置き、部品には引数で渡す
+:: Lib {
+	// 盤面の文字列を作る。tile(x, y) が各マスの絵文字を返す
+	@grid(size, tile) {
+		Arr:create(size).map(@(_row, y) {
+			Arr:create(size).map(@(_cell, x) { tile(x, y) }).join("")
+		}).join(Str:lf)
+	}
+	// 十字キー。押されると onMove(dx, dy) を呼ぶ
+	@pad(onMove) {
+		Ui:C:container({ align: "center", children: [
+			Ui:C:buttons({ buttons: [{ text: "⬆️", onClick: @() { onMove(0, -1) } }] }, "padUp"),
+			Ui:C:buttons({ buttons: [
+				{ text: "⬅️", onClick: @() { onMove(-1, 0) } },
+				{ text: "⬇️", onClick: @() { onMove(0, 1) } },
+				{ text: "➡️", onClick: @() { onMove(1, 0) } },
+			] }, "padRow"),
+		] })
+	}
+	@clamp(v, lo, hi) { Math:max(lo, Math:min(hi, v)) }
+	// 盤面の外には出ない移動
+	@moved(pos, dx, dy, size) { { x: clamp(pos.x + dx, 0, size - 1), y: clamp(pos.y + dy, 0, size - 1) } }
+	@has(list, x, y) { list.some(@(c) { c.x == x && c.y == y }) }
+	// 重ならない場所にコインを置く（スタート地点の 0,0 は避ける）。rng(min, max) は min 以上 max 以下の整数を返す関数
+	@placeCoins(size, count, rng) {
+		var list = []
+		loop {
+			if list.len >= count break
+			let c = { x: rng(0, size - 1), y: rng(0, size - 1) }
+			if !(c.x == 0 && c.y == 0) && !has(list, c.x, c.y) list.push(c)
+		}
+		list
+	}
+}
+
+// ===== テスト（playground でだけ動く。Misskey には PLAYGROUND がないので動かない）=====
+@tests() {
+	Test:check("盤面の外に出ない", @() {
+		Test:eq(Lib:moved({ x: 0, y: 0 }, -1, 0, 5), { x: 0, y: 0 })
+		Test:eq(Lib:moved({ x: 4, y: 2 }, 1, 0, 5), { x: 4, y: 2 })
+		Test:eq(Lib:moved({ x: 2, y: 2 }, 0, 1, 5), { x: 2, y: 3 })
+	})
+	Test:check("コインは重ならず、スタート地点にも置かない", @() {
+		let list = Lib:placeCoins(5, 10, Math:gen_rng("test"))
+		Test:eq(list.len, 10)
+		Test:ok(!Lib:has(list, 0, 0), "スタート地点にない")
+		each let c, list {
+			Test:eq(list.filter(@(d) { d.x == c.x && d.y == c.y }).len, 1, \`({c.x}, {c.y}) は 1 枚だけ\`)
+		}
+	})
+	Test:check("盤面の大きさ", @() {
+		Test:eq(Lib:grid(3, @(x, y) { "⬜" }).split(Str:lf).len, 3)
+	})
+}
+if exists PLAYGROUND tests()
+`,
+	},
+	{
 		id: 'hello',
 		title: 'はじめての UI',
 		code: `/// @ 1.2.1

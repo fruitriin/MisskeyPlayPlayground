@@ -27,6 +27,7 @@ npm run dev
 - エディタの補完とホバー時のヒント（標準関数・`Ui:`/`Mk:` 関数・`Ui:C:*` のプロパティ・組み込みプロパティ）
 - `Mk:api` 用のモックサーバー（ブラウザ内で動作、既定）
 - ミニゲームの作り方のガイド（画面の「📖 ガイド」、`#guide` 付きの URL でも開く）
+- 静的チェック（エディタの波線・`npm run lint:ais`）、テスト関数 `Test:*`（`if exists PLAYGROUND` の中でだけ動く）、シナリオテスト（[docs/ai/testing.md](docs/ai/testing.md)）
 - 🔗 ライブ共有: 合言葉を決めると、AI などが HTTP でこの画面のコードを読み書き・実行・操作でき、画面にすぐ反映される（[docs/ai/live-api.md](docs/ai/live-api.md)）。API は Cloudflare Workers と Durable Objects（`worker/index.ts`）で動く
 - `window.__playground` でコードの実行と UI の操作を JSON でできる（[docs/ai/browser-api.md](docs/ai/browser-api.md)）
 - AI 向けの資料一式（`docs/ai/`、公開サイトでは `/llms.txt` から辿れる）

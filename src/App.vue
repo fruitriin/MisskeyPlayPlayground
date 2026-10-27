@@ -235,7 +235,8 @@ onMounted(async () => {
 	border-bottom: solid 1px var(--divider);
 }
 .badge { padding: 2px 8px; font-weight: normal; border-radius: 999px; background: var(--buttonBg); }
-.previewBody { flex: 1; overflow: auto; padding: 16px; background: var(--bg); }
+/* 行の高さは Misskey 本体（packages/frontend/src/style.scss の html）と同じ 1.35。MFM で重ねる位置の計算が本体と合うように */
+.previewBody { flex: 1; overflow: auto; padding: 16px; background: var(--bg); line-height: 1.35; }
 .empty { color: var(--fgTransparentWeak); font-size: 0.9em; padding: 8px; }
 .empty code { padding: 0.1em 0.3em; font-family: Fira Code, Menlo, monospace; background: var(--buttonBg); border-radius: 4px; }
 .tab { padding: 6px 8px; font: inherit; color: var(--fgTransparentWeak); background: none; border: none; border-bottom: solid 2px transparent; cursor: pointer; }

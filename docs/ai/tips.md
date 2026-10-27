@@ -91,6 +91,22 @@ AI がコードを書くときに間違えやすい点を、AiScript 1.2.1 で�
 - `postFormButton` と `postForm` の `form.text` は必須
 - MFM の中で押せる箇所を作るには `$[clickable.ev=名前 文字]` と書き、`Ui:C:mfm` の `onClickEv: @(ev) { ... }` で受け取る
 - コールバック（`onClick` など）の中で起きたエラーは、スクリプト全体を止めずにエラーとして表示される
+- **コールバックは重なって動くことがある**。AiScript は長い処理の途中で一定の手数ごとに一息つき（既定で 300 手ごと）、そのあいだに次のクリックやタップを受け付ける。重い処理（画面の文字を大きく作り直すなど）のあいだに素早く 2 回押されると、1 回目の途中で 2 回目のコールバックが始まり、同じ処理が 2 回行われる（ゲームなら、戦闘の終わりが 2 回起きる、など）。押されたものを列に入れて 1 つずつ処理し、「一度だけ」行う処理は、状態を変える前に印を消してから行う。完全に同時の 2 回は防ぎきれない（AiScript には、確かめて印を付けるのを一度に行う手段がない）
+
+```
+var keyQueue = []
+var pressing = false
+@press(k) {
+	if keyQueue.len < 3 keyQueue.push(k)
+	if pressing return null
+	pressing = true
+	loop {
+		if keyQueue.len == 0 break
+		handleKey(keyQueue.shift())
+	}
+	pressing = false
+}
+```
 
 ## Mk:* の関数
 

@@ -40,6 +40,7 @@
 					<li><a :href="`${base}llms.txt`" target="_blank" rel="noopener">llms.txt</a>（資料の入口。AI にはまずこれを読ませてください）</li>
 					<li><a :href="`${base}ai/tips.md`" target="_blank" rel="noopener">間違えやすい点（tips.md）</a></li>
 					<li><a :href="`${base}ai/minigame.md`" target="_blank" rel="noopener">ミニゲームの作り方（minigame.md）</a></li>
+					<li><a :href="`${base}ai/mfm-layout.md`" target="_blank" rel="noopener">画面づくり・重ねるウィンドウ・演出（mfm-layout.md）</a></li>
 					<li><a :href="`${base}ai/live-api.md`" target="_blank" rel="noopener">ライブ共有の API（live-api.md）</a></li>
 					<li><a :href="`${base}ai/browser-api.md`" target="_blank" rel="noopener">ブラウザ操作の API（browser-api.md）</a></li>
 				</ul>

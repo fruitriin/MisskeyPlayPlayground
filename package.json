@@ -30,7 +30,7 @@
     "codemirror": "^6.0.2",
     "marked": "^18.1.1",
     "mfm-js": "^0.28.0",
-    "mfm-renderer": "github:fruitriin/mfm-renderer#v0.2.0",
+    "mfm-renderer": "github:fruitriin/mfm-renderer#5d1470a06ab0d50e786b33c821fcb9f2bcaf59f0",
     "vue": "^3.5.44"
   },
   "devDependencies": {

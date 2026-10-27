@@ -12,6 +12,8 @@ export type Settings = {
 	locale: string;
 	dummyUser: { id: string; name: string; username: string };
 	dark: 'auto' | 'light' | 'dark';
+	// MFM の中の絵文字の描き方。Misskey の既定は twemoji
+	emojiStyle: 'twemoji' | 'native';
 };
 
 const defaults: Settings = {
@@ -21,6 +23,7 @@ const defaults: Settings = {
 	locale: 'ja-JP',
 	dummyUser: { id: '9xxxxxxxxx', name: 'Playground User', username: 'playground' },
 	dark: 'auto',
+	emojiStyle: 'twemoji',
 };
 
 function load(): Settings {

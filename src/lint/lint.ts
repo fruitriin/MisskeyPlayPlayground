@@ -173,10 +173,39 @@ export function lint(code: string): Diagnostic[] {
 	return result.sort((a, b) => a.line - b.line || a.column - b.column);
 }
 
+// 文字列（テンプレート文字列なら文字の部分）に、MFM の書き方が入っているか
+const MFM_LIKE = /:[A-Za-z0-9_+-]+:|\$\[|\*\*|<center>|<small>/;
+function mfmLike(n: Node | undefined): boolean {
+	if (!n) return false;
+	if (n.type === 'str') return MFM_LIKE.test(n.value as string);
+	if (n.type === 'tmpl') return (n.tmpl as Node[]).some(p => p.type === 'str' && MFM_LIKE.test(p.value as string));
+	return false;
+}
+
+// Ui:C:text とボタンの文字は MFM として解析されない（Misskey の MkAsUi は {{ text }} で出すだけ）
+function checkPlainText(kind: string, value: Map<string, Node>, result: Diagnostic[]) {
+	const where = kind === 'text' ? 'Ui:C:text の文字' : 'ボタンの文字';
+	const message = `${where}は MFM として解析されないので、:カスタム絵文字: や $[...]・**太字** は、そのまま文字で表示されます。${kind === 'text' ? 'MFM を使うなら Ui:C:mfm にします' : 'ボタンの文字は平文です（絵文字は OS の絵文字で表示され、MFM の中の絵文字とは見た目が変わります）'}`;
+	if (kind === 'text' || kind === 'button' || kind === 'postFormButton') {
+		const text = value.get('text');
+		if (mfmLike(text)) result.push(diag(text!.loc, 'warning', 'plain-text-mfm', message));
+	}
+	if (kind === 'buttons') {
+		const buttons = value.get('buttons');
+		if (buttons?.type !== 'arr') return;
+		for (const b of buttons.value as Node[]) {
+			if (b.type !== 'obj') continue;
+			const text = (b.value as Map<string, Node>).get('text');
+			if (mfmLike(text)) result.push(diag(text!.loc, 'warning', 'plain-text-mfm', message));
+		}
+	}
+}
+
 function checkComponent(kind: string, def: Node | undefined, result: Diagnostic[]) {
 	const props = COMPONENT_PROPS.get(kind);
 	if (!props || def?.type !== 'obj') return;
 	const value = def.value as Map<string, Node>;
+	checkPlainText(kind, value, result);
 	for (const [key, v] of value) {
 		if (!props.has(key)) {
 			const message = key === 'hidden'

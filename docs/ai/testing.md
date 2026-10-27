@@ -21,6 +21,7 @@
 | `null-prop` | error | `Ui:C:*` のプロパティに `null` を渡している |
 | `unknown-prop` | warning | `Ui:C:*` にないプロパティ。container 以外の `hidden` も |
 | `button-in-fgcolor` | warning | `fgColor` を付けた container の中にボタンを直接入れている |
+| `plain-text-mfm` | warning | `Ui:C:text` やボタンの文字に `:カスタム絵文字:`・`$[...]`・`**太字**` を書いている（平文なので、そのまま文字で出る） |
 | `js-property` | warning | `.length`・`.includes` など JavaScript の書き方（AiScript では `.len`・`.incl`） |
 
 使い方:

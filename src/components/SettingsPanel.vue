@@ -40,6 +40,10 @@
 				<XSelect v-model="settings.dark" small :items="[{ value: 'auto', label: 'OS に合わせる' }, { value: 'light', label: 'ライト' }, { value: 'dark', label: 'ダーク' }]">
 					<template #label>テーマ</template>
 				</XSelect>
+				<XSelect v-model="settings.emojiStyle" small :items="[{ value: 'twemoji', label: 'Twemoji（Misskey の既定）' }, { value: 'native', label: 'OS の絵文字' }]">
+					<template #label>MFM の中の絵文字</template>
+					<template #caption>Misskey の設定「絵文字のスタイル」に合わせて選びます。ボタンや Ui:C:text の絵文字は、どちらでも OS の絵文字で表示されます（Misskey と同じ）</template>
+				</XSelect>
 			</section>
 		</div>
 	</div>

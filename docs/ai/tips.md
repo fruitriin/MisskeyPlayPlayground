@@ -22,6 +22,7 @@ AI がコードを書くときに間違えやすい点を、AiScript 1.2.1 で�
 - **文字列のエスケープシーケンスはない**。`"a\nb"` は改行にならず `anb` になる（`\` は次の 1 文字をそのまま入れるだけ）。改行は `Str:lf` かテンプレート文字列の中の改行で書く
 - **予約語が多い**。`fn`・`out`・`in`・`is`・`as`・`do`・`use`・`new`・`this`・`meta`・`hash`・`table`・`class`・`enum`・`try`・`when`・`while`・`yield`・`ref` なども、変数名や関数名に使うと構文エラーになる（一覧は [aiscript/keywords.md](aiscript/keywords.md)）。オブジェクトのキーには使えるが、`obj.default` のような書き方では読めないので `obj["default"]` と書く
 - `&&` と `||` は、左だけで結果が決まれば右を評価しない（短絡評価）。`x != null && x.len > 0` のように、null かもしれない値を先に調べてよい
+- **配列の `map` と `flat_map` は、コールバックを並行して呼ぶ**（AiScript 本体の実装が `Promise.all`）。コールバックの中で外の変数を読んで書き換えると、ずれる。たとえば `count[k] = if count[k] == null 1 else count[k] + 1` で同じ種類を数えると、全部 1 になる。順番に数えたり、外の状態を変えたりするときは `each` を使う
 - `Math:rnd(min, max)` と、`Math:gen_rng(シード)` が返す関数 `rng(min, max)` は、**min 以上 max 以下**の整数を返す（max も出る）。`rng(0, 1)` は 0 か 1。五分五分にしたいなら `rng(0, 1) == 1` でよい
 - 型を調べるのは `Core:type(v)`。返り値は `"str"`, `"num"`, `"bool"`, `"null"`, `"arr"`, `"obj"`, `"fn"`, `"error"` のいずれか
 

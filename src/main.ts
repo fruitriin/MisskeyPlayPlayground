@@ -1,7 +1,6 @@
 import { computed, createApp } from 'vue';
 import MfmPlugin from 'mfm-renderer';
 import 'mfm-renderer/style.css';
-import './mfm-animation.css';
 import App from './App.vue';
 import { normalizedServerUrl } from './settings.js';
 import { customEmojiMap } from './runner.js';

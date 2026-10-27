@@ -12,7 +12,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</template>
 	</div>
 	<span v-else-if="c.type === 'text'" :class="{ [$style.fontSerif]: c.font === 'serif', [$style.fontMonospace]: c.font === 'monospace' }" :style="{ fontSize: c.size ? `${c.size * 100}%` : undefined, fontWeight: c.bold ? 'bold' : undefined, color: c.color }">{{ c.text }}</span>
-	<span v-else-if="c.type === 'mfm'" :class="['as-mfm', $style.mfm, { [$style.fontSerif]: c.font === 'serif', [$style.fontMonospace]: c.font === 'monospace' }]" :style="{ fontSize: c.size ? `${c.size * 100}%` : undefined, fontWeight: c.bold ? 'bold' : undefined, color: c.color ?? undefined }">
+	<span v-else-if="c.type === 'mfm'" :class="[$style.mfm, { [$style.fontSerif]: c.font === 'serif', [$style.fontMonospace]: c.font === 'monospace' }]" :style="{ fontSize: c.size ? `${c.size * 100}%` : undefined, fontWeight: c.bold ? 'bold' : undefined, color: c.color ?? undefined }">
 		<MfmRenderer :text="c.text ?? ''" :emojiStyle="settings.emojiStyle" @clickEv="(ev: string) => c.type === 'mfm' && trackCallback(c.onClickEv?.(ev))"/>
 	</span>
 	<XButton v-else-if="c.type === 'button'" :primary="c.primary" :rounded="c.rounded" :disabled="c.disabled" :small="size === 'small'" inline @click="trackCallback(c.onClick?.())">{{ c.text }}</XButton>
